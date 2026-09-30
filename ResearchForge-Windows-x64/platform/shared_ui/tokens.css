@@ -1,0 +1,192 @@
+/*
+ * ResearchForge design tokens — shared by every workspace page.
+ * Neutral and accent scales follow Radix Colors "sage" and "jade" (MIT, radix-ui.com/colors),
+ * tuned around the original brand green #2d6654. Pages read only these variables.
+ */
+:root {
+  color-scheme: light;
+
+  /* Surfaces */
+  --rf-bg: #fbfcfb;
+  --rf-bg-subtle: #f6f8f7;
+  --rf-sidebar: #f2f5f3;
+  --rf-surface: #ffffff;
+  --rf-surface-2: #f7f9f8;
+  --rf-surface-3: #eef2f0;
+  --rf-hover: #edf1ee;
+  --rf-active: #e4ebe6;
+  --rf-overlay: rgb(17 28 23 / .38);
+  --rf-topbar: rgb(251 252 251 / .82);
+
+  /* Lines */
+  --rf-line: #e1e6e2;
+  --rf-line-soft: #ebefec;
+  --rf-line-strong: #cbd2cd;
+
+  /* Text */
+  --rf-text: #1a211e;
+  --rf-text-2: #414a46;
+  --rf-text-3: #5c6560;
+  --rf-text-4: #858e89;
+  --rf-placeholder: #939b97;
+
+  /* Brand accent */
+  --rf-accent: #2d6654;
+  --rf-accent-hover: #245545;
+  --rf-accent-press: #1d4739;
+  --rf-accent-text: #226b55;
+  --rf-accent-soft: #e8f5ee;
+  --rf-accent-soft-2: #d6efe2;
+  --rf-accent-line: #aedcc6;
+  --rf-accent-mid: #56ba9f;
+  --rf-on-accent: #ffffff;
+  --rf-focus: #2f8a6d;
+  --rf-selection: #cfeadb;
+
+  /* Status */
+  --rf-warn: #93600f;
+  --rf-warn-soft: #fcf3e3;
+  --rf-warn-line: #efd9ae;
+  --rf-danger: #b0392f;
+  --rf-danger-soft: #fdf1ef;
+  --rf-danger-line: #f1cfc9;
+  --rf-info: #2f6490;
+  --rf-info-soft: #eef4fa;
+
+  /* Inverse (toasts) */
+  --rf-inverse: #1d2a24;
+  --rf-on-inverse: #f1f5f2;
+
+  /* Type */
+  --rf-font: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Segoe UI", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+  --rf-font-serif: "Iowan Old Style", "Songti SC", Georgia, "Noto Serif SC", serif;
+  --rf-font-mono: ui-monospace, "SF Mono", "Cascadia Code", Consolas, "PingFang SC", monospace;
+
+  /* Shape */
+  --rf-r-xs: 4px;
+  --rf-r-sm: 6px;
+  --rf-r: 8px;
+  --rf-r-md: 10px;
+  --rf-r-lg: 12px;
+  --rf-r-xl: 16px;
+  --rf-r-full: 999px;
+
+  /* Elevation */
+  --rf-shadow-xs: 0 1px 2px rgb(20 36 28 / .05);
+  --rf-shadow-sm: 0 1px 3px rgb(20 36 28 / .07), 0 1px 2px rgb(20 36 28 / .04);
+  --rf-shadow-md: 0 8px 20px -6px rgb(20 36 28 / .12), 0 2px 5px -2px rgb(20 36 28 / .06);
+  --rf-shadow-lg: 0 24px 60px -16px rgb(16 32 24 / .28), 0 8px 18px -8px rgb(16 32 24 / .12);
+  --rf-ring: 0 0 0 3px rgb(47 138 109 / .16);
+
+  /* Motion */
+  --rf-ease-out: cubic-bezier(.22, 1, .36, 1);
+  --rf-ease-in: cubic-bezier(.55, 0, 1, .45);
+  --rf-ease-in-out: cubic-bezier(.65, 0, .35, 1);
+  --rf-ease-spring: cubic-bezier(.34, 1.4, .64, 1);
+  --rf-dur-1: 120ms;
+  --rf-dur-2: 200ms;
+  --rf-dur-3: 320ms;
+  --rf-dur-4: 480ms;
+
+  /* Layout */
+  --rf-sidebar-w: 256px;
+  --rf-topbar-h: 60px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --rf-bg: #111413;
+    --rf-bg-subtle: #151918;
+    --rf-sidebar: #141817;
+    --rf-surface: #1a1e1d;
+    --rf-surface-2: #1f2422;
+    --rf-surface-3: #252b29;
+    --rf-hover: #232927;
+    --rf-active: #2a312e;
+    --rf-overlay: rgb(0 0 0 / .56);
+    --rf-topbar: rgb(17 20 19 / .8);
+    --rf-line: #2c3330;
+    --rf-line-soft: #242a28;
+    --rf-line-strong: #3d4643;
+    --rf-text: #eceeed;
+    --rf-text-2: #c9d0cc;
+    --rf-text-3: #a4ada9;
+    --rf-text-4: #78837e;
+    --rf-placeholder: #6f7a75;
+    --rf-accent: #23846a;
+    --rf-accent-hover: #29967a;
+    --rf-accent-press: #1e735c;
+    --rf-accent-text: #5ccfa6;
+    --rf-accent-soft: #13291f;
+    --rf-accent-soft-2: #173a2d;
+    --rf-accent-line: #235a47;
+    --rf-accent-mid: #2a9c7c;
+    --rf-on-accent: #ffffff;
+    --rf-focus: #47c29a;
+    --rf-selection: #1e4a3a;
+    --rf-warn: #e3ae5b;
+    --rf-warn-soft: #2a2215;
+    --rf-warn-line: #4f3f22;
+    --rf-danger: #f08a7e;
+    --rf-danger-soft: #2c1a18;
+    --rf-danger-line: #5a302b;
+    --rf-info: #8cb8e0;
+    --rf-info-soft: #172330;
+    --rf-inverse: #e9eeeb;
+    --rf-on-inverse: #16201b;
+    --rf-shadow-xs: 0 1px 2px rgb(0 0 0 / .3);
+    --rf-shadow-sm: 0 1px 3px rgb(0 0 0 / .35), 0 1px 2px rgb(0 0 0 / .25);
+    --rf-shadow-md: 0 10px 24px -8px rgb(0 0 0 / .55), 0 2px 6px -2px rgb(0 0 0 / .35);
+    --rf-shadow-lg: 0 28px 70px -18px rgb(0 0 0 / .7), 0 8px 22px -8px rgb(0 0 0 / .45);
+    --rf-ring: 0 0 0 3px rgb(71 194 154 / .22);
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --rf-bg: #111413;
+  --rf-bg-subtle: #151918;
+  --rf-sidebar: #141817;
+  --rf-surface: #1a1e1d;
+  --rf-surface-2: #1f2422;
+  --rf-surface-3: #252b29;
+  --rf-hover: #232927;
+  --rf-active: #2a312e;
+  --rf-overlay: rgb(0 0 0 / .56);
+  --rf-topbar: rgb(17 20 19 / .8);
+  --rf-line: #2c3330;
+  --rf-line-soft: #242a28;
+  --rf-line-strong: #3d4643;
+  --rf-text: #eceeed;
+  --rf-text-2: #c9d0cc;
+  --rf-text-3: #a4ada9;
+  --rf-text-4: #78837e;
+  --rf-placeholder: #6f7a75;
+  --rf-accent: #23846a;
+  --rf-accent-hover: #29967a;
+  --rf-accent-press: #1e735c;
+  --rf-accent-text: #5ccfa6;
+  --rf-accent-soft: #13291f;
+  --rf-accent-soft-2: #173a2d;
+  --rf-accent-line: #235a47;
+  --rf-accent-mid: #2a9c7c;
+  --rf-on-accent: #ffffff;
+  --rf-focus: #47c29a;
+  --rf-selection: #1e4a3a;
+  --rf-warn: #e3ae5b;
+  --rf-warn-soft: #2a2215;
+  --rf-warn-line: #4f3f22;
+  --rf-danger: #f08a7e;
+  --rf-danger-soft: #2c1a18;
+  --rf-danger-line: #5a302b;
+  --rf-info: #8cb8e0;
+  --rf-info-soft: #172330;
+  --rf-inverse: #e9eeeb;
+  --rf-on-inverse: #16201b;
+  --rf-shadow-xs: 0 1px 2px rgb(0 0 0 / .3);
+  --rf-shadow-sm: 0 1px 3px rgb(0 0 0 / .35), 0 1px 2px rgb(0 0 0 / .25);
+  --rf-shadow-md: 0 10px 24px -8px rgb(0 0 0 / .55), 0 2px 6px -2px rgb(0 0 0 / .35);
+  --rf-shadow-lg: 0 28px 70px -18px rgb(0 0 0 / .7), 0 8px 22px -8px rgb(0 0 0 / .45);
+  --rf-ring: 0 0 0 3px rgb(71 194 154 / .22);
+}

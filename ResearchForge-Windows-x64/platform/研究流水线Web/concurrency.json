@@ -1,0 +1,5 @@
+{
+  "max_parallel_tasks": 3,
+  "max_api_calls": 4,
+  "max_task_calls": 3
+}

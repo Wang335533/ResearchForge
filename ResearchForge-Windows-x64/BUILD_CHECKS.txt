@@ -1,0 +1,9 @@
+Portable edition, 2026-09-30
+
+Windows x64 (native run on Windows 10 Pro 22H2, x64):
+- Runtime: official python-build-standalone 3.12.14 and Ollama 0.35.0 archives, both verified against published SHA256 digests. Python dependencies installed from pypi.org with pip --require-hashes; colorama added for click's Windows marker. Ollama keeps ollama.exe, the CPU backends and the Vulkan backend; the CUDA backends are not bundled.
+- START-WINDOWS.cmd --check passed: bundled Python, dependencies, SQLite FTS5 trigram, retrieval engine and embedding model all present.
+- End-to-end run in a scratch workspace with synthetic data only: all workspace pages and /ui assets served; the bundled Qwen3-Embedding model embedded a 12-paper bilingual synthetic corpus (Vulkan on an NVIDIA GPU was detected and used) and hybrid Chinese/English retrieval returned results; a second launch of the same folder reused the running workbench; the full-text index was rebuilt twice while the workbench was running; killing the launcher also stopped its own Ollama process; the folder restarted cleanly afterwards.
+- Windows file replacement: atomic writes now retry briefly while another reader holds the file (Windows refuses os.replace in that case). This removed the intermittent report-export failures seen on Windows.
+- Test suites (run before the test code was removed from the distribution): all frontend DOM checks passed; the Python suites passed apart from test-harness issues specific to Windows (temporary-directory cleanup while SQLite files are still open, POSIX chmod assertions, and one test that keeps its own SQLite connection open).
+No paid generation API was invoked. Synthetic fixtures, test logs and all runtime user_data stay outside the distribution.

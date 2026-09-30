@@ -1,0 +1,10 @@
+ResearchForge portable source distribution.
+KaTeX: platform/paper_reader/static/vendor/katex/LICENSE.
+Lucide icons (platform/shared_ui/icons.svg): https://lucide.dev , ISC License. Copyright (c) for portions of Lucide are held by Cole Bemis 2013-2022 as part of Feather (MIT). All other copyright (c) for Lucide are held by Lucide Contributors 2022. Permission to use, copy, modify, and/or distribute this software for any purpose with or without fee is hereby granted, provided that the above copyright notice and this permission notice appear in all copies. THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS.
+Colour scales in platform/shared_ui/tokens.css are adapted from Radix Colors (sage, jade): https://github.com/radix-ui/colors , MIT License, Copyright (c) 2022 WorkOS.
+Redistributable Python builds: https://github.com/astral-sh/python-build-standalone . Upstream license texts are retained under runtime/licenses/python-build-standalone and within the Python runtime.
+Python packages preserve their own *.dist-info/licenses and other license files.
+Ollama: https://github.com/ollama/ollama . Its MIT license is retained in runtime/licenses/OLLAMA-LICENSE, alongside dependency licenses in runtime/ollama.
+Qwen3-Embedding-0.6B: https://huggingface.co/Qwen/Qwen3-Embedding-0.6B . Apache-2.0 text and verified model origin are retained in runtime/licenses.
+Public software and the public embedding model are bundled. No literature corpus, paper-derived vectors, API credential, private prompt collection, user record or Git history is included.
+No new license for the original application code is asserted by this package.

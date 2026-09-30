@@ -1,0 +1,5 @@
+Qwen3-Embedding-0.6B / Apache-2.0
+https://huggingface.co/Qwen/Qwen3-Embedding-0.6B
+Ollama artifact: https://ollama.com/library/qwen3-embedding:0.6b
+Registry manifest: https://registry.ollama.ai/v2/library/qwen3-embedding/manifests/0.6b
+The bundled model blobs are byte-for-byte verified against the official registry SHA256 digests. No user-trained model or local paper index is included.

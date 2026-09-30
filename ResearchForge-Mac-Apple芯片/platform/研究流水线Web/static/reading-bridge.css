@@ -1,0 +1,54 @@
+/* Research → local full text handoff (slots under literature and references, plus the picker dialog). */
+.reading-bridge-slot { display: flex; align-items: center; gap: 8px 14px; flex-wrap: wrap; margin-top: 12px; font-size: 12.5px; }
+.bridge-status { display: inline-flex; align-items: center; gap: 6px; color: var(--rf-text-4); font-size: 12px; line-height: 1.7; }
+.bridge-status::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--rf-line-strong); }
+.bridge-status.available { color: var(--rf-accent-text); }
+.bridge-status.available::before { background: var(--rf-accent-mid); }
+.reading-bridge-slot .text-btn { font-size: 12.5px; padding: 2px 0; }
+.reference-card .reading-bridge-slot { gap: 6px 12px; padding-top: 10px; border-top: 1px dashed var(--rf-line); }
+
+.reading-bridge-dialog { width: min(1160px, 95vw); max-height: 92vh; }
+.reading-bridge-dialog .dialog-head { align-items: flex-start; justify-content: space-between; }
+.reading-bridge-dialog .dialog-head > div { flex: 1; min-width: 0; }
+.reading-bridge-dialog .dialog-head p { max-width: 950px; overflow-wrap: anywhere; }
+.reading-bridge-dialog .dialog-body { max-height: 68vh; overflow: auto; }
+.bridge-search { display: flex; gap: 10px; margin: 12px 0; }
+.bridge-search input {
+  flex: 1; min-width: 0; height: 40px; padding: 0 14px;
+  border: 1px solid var(--rf-line); border-radius: var(--rf-r); background: var(--rf-surface); font-size: 13.5px;
+}
+.bridge-search input:focus-visible { outline: none; border-color: var(--rf-accent-line); box-shadow: var(--rf-ring); }
+.bridge-help { margin: 10px 0 16px; font-size: 12.5px; line-height: 1.8; color: var(--rf-text-3); }
+.bridge-columns { display: grid; grid-template-columns: minmax(220px, 1fr) minmax(300px, 1.65fr); gap: 20px; min-height: 260px; }
+.bridge-candidates { max-height: 380px; overflow: auto; font-size: 13px; color: var(--rf-text-3); line-height: 1.8; }
+.bridge-candidate {
+  display: block; width: 100%; margin-bottom: 8px; padding: 12px 14px;
+  border: 1px solid var(--rf-line); border-radius: var(--rf-r); background: var(--rf-surface-2); text-align: left; cursor: pointer;
+  transition: border-color var(--rf-dur-1), background-color var(--rf-dur-1);
+}
+.bridge-candidate:hover:not(:disabled) { border-color: var(--rf-accent-line); background: var(--rf-accent-soft); }
+.bridge-candidate:disabled { opacity: .55; cursor: not-allowed; }
+.bridge-candidate strong { display: block; font-size: 13px; font-weight: 580; color: var(--rf-text); line-height: 1.65; }
+.bridge-candidate span { display: block; margin-top: 6px; font-size: 11.5px; color: var(--rf-text-3); line-height: 1.75; }
+.bridge-preview { min-width: 0; }
+.bridge-preview h3 { margin: 0; font-size: 14.5px; line-height: 1.75; }
+.bridge-preview .hint { margin: 6px 0; font-size: 12px; overflow-wrap: anywhere; }
+#bridge-paper-text {
+  max-height: 300px; overflow: auto; padding: 14px;
+  border: 1px solid var(--rf-line); border-radius: var(--rf-r); background: var(--rf-surface-2);
+  white-space: pre-wrap; overflow-wrap: anywhere; font: 12.5px/1.9 var(--rf-font-mono); color: var(--rf-text-2);
+}
+.bridge-confirm { display: flex; gap: 8px; margin-top: 16px; font-size: 13px; line-height: 1.8; color: var(--rf-text-2); }
+.bridge-confirm input { accent-color: var(--rf-accent); }
+.bridge-confirm[hidden] { display: none; }
+.reading-bridge-dialog .dialog-foot { justify-content: space-between; gap: 16px; }
+.reading-bridge-dialog .dialog-foot .hint { font-size: 12.5px; }
+.bridge-footer-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+.bridge-footer-actions a { font-size: 12.5px; }
+@media (max-width: 760px) {
+  .bridge-columns { grid-template-columns: 1fr; }
+  .bridge-candidates { max-height: 170px; }
+  .bridge-search { flex-wrap: wrap; }
+  .bridge-search input { flex-basis: 100%; }
+  .reading-bridge-dialog .dialog-foot .hint { max-width: 48%; }
+}

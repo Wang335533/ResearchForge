@@ -1,0 +1,8 @@
+Flask>=3.1,<4
+requests>=2.31,<3
+numpy>=1.24,<3
+pyarrow>=14,<25
+bleach>=6,<7
+Markdown>=3.6,<4
+pymdown-extensions>=10,<11
+pypdf>=5,<7

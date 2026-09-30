@@ -1,0 +1,23 @@
+{
+  "distribution": "Windows x64",
+  "components": [
+    {
+      "name": "cpython-3.12.14+20260929-x86_64-pc-windows-msvc-install_only_stripped.tar.gz",
+      "browser_download_url": "https://github.com/astral-sh/python-build-standalone/releases/download/20260929/cpython-3.12.14%2B20260929-x86_64-pc-windows-msvc-install_only_stripped.tar.gz",
+      "size": 21992568,
+      "digest": "sha256:f38e68f4d612ade6dd50c894fc80b14c0be0c3b5201145d6fff5f20b9323204d"
+    },
+    {
+      "name": "ollama-windows-amd64.zip",
+      "browser_download_url": "https://github.com/ollama/ollama/releases/download/v0.35.0/ollama-windows-amd64.zip",
+      "size": 1461196158,
+      "digest": "sha256:d6f7d3dd4f5d013553a78c1e78b2521fcf41d43dd2863e4596cdc046fe6036db",
+      "included": "ollama.exe, CPU backends and Vulkan backend; lib/ollama/cuda_v12 and lib/ollama/cuda_v13 are not bundled"
+    }
+  ],
+  "python_dependencies": "../requirements.lock.txt",
+  "python_dependency_hashes": "Installed from https://pypi.org/simple with pip --require-hashes against PyPI-published SHA256 digests (cp312 win_amd64 or py3-none-any wheels).",
+  "model_registry": "https://registry.ollama.ai/v2/library/qwen3-embedding/manifests/0.6b",
+  "model_license": "licenses/Qwen3-Embedding-APACHE-2.0.txt",
+  "private_data_included": false
+}

@@ -1,0 +1,13 @@
+# Portable runtimes ship in the release archives; GitHub rejects files over 100 MB.
+*/runtime/python/
+*/runtime/ollama/
+*/runtime/models/
+release/
+*.zip
+.claude/
+user_data/
+config.json
+__pycache__/
+*.pyc
+.DS_Store
+*.log

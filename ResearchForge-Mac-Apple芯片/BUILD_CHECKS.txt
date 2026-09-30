@@ -1,0 +1,6 @@
+Portable edition, 2026-09-30
+
+Mac Apple Silicon (original build): bundled Python started with system-only PATH and without inherited Python paths; 86 research + 44 reader + 5 isolation/index tests passed; all four UI endpoints served; real bundled embedding vectors and bilingual hybrid retrieval tested with synthetic fixtures; duplicate launch reused server; termination stopped the owned Ollama process.
+Interface update (same day): shared workspace shell (platform/shared_ui), light/dark appearance, command palette, page transitions and shorter copy; atomic file writes retry briefly while another reader holds the file. The application code is byte-identical to the Windows x64 edition, where it was run end to end; the Mac runtime itself was not re-executed after this update because no Mac was available. The test code was removed from the distribution after these checks.
+Windows x64: shipped as the separate ResearchForge-Windows-x64 package with its own BUILD_CHECKS.txt.
+No paid generation API was invoked. Synthetic fixtures, test logs and all runtime user_data stay outside the distribution.

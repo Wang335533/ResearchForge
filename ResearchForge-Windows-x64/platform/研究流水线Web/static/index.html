@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#fbfcfb" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#111413" media="(prefers-color-scheme: dark)">
+  <title>ResearchForge · 研究构想</title>
+  <link rel="icon" href="/ui/favicon.svg" type="image/svg+xml">
+  <script src="/ui/boot.js"></script>
+  <link rel="stylesheet" href="/ui/tokens.css">
+  <link rel="stylesheet" href="/ui/shell.css">
+  <link rel="stylesheet" href="/static/workspace.css">
+  <link rel="stylesheet" href="/static/reading-bridge.css">
+  <script src="/ui/shell.js" defer></script>
+  <script src="/static/app.js" defer></script>
+  <script src="/static/views.js" defer></script>
+  <script src="/static/exports.js" defer></script>
+  <script src="/static/prompts.js" defer></script>
+  <script src="/static/reading-bridge.js" defer></script>
+  <script src="/static/tasks.js" defer></script>
+  <script src="/static/reports.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">跳转到研究内容</a>
+  <div id="sidebar-shade" class="sidebar-shade" hidden></div>
+  <aside id="sidebar" class="sidebar" aria-label="研究任务">
+    <a class="brand" href="/" aria-label="ResearchForge 首页"><span class="brand-mark">R<span>f</span></span><span>ResearchForge<small>研究工作台</small></span></a>
+    <nav class="workspace-modules" aria-label="工作台功能"><a href="/" aria-current="page"><i class="nav-pill" aria-hidden="true"></i><svg class="icon" aria-hidden="true"><use href="/ui/icons.svg#i-lightbulb"/></svg><span>研究构想</span></a><a href="/papers/"><svg class="icon" aria-hidden="true"><use href="/ui/icons.svg#i-book-open-text"/></svg><span>论文精读</span></a><a href="/papers/memory"><svg class="icon" aria-hidden="true"><use href="/ui/icons.svg#i-waypoints"/></svg><span>文献地图</span></a><a href="/papers/prompt-library"><svg class="icon" aria-hidden="true"><use href="/ui/icons.svg#i-library-big"/></svg><span>提示词库</span></a></nav>
+    <button id="btn-new" class="btn new-task"><svg class="icon" aria-hidden="true"><use href="/ui/icons.svg#i-plus"/></svg>新建研究</button>
+    <div class="history-heading"><span>研究历史</span><button id="task-refresh" class="icon-btn" aria-label="刷新任务历史" title="刷新"><svg class="icon" aria-hidden="true"><use href="/ui/icons.svg#i-refresh-cw"/></svg></button></div>
+    <label class="history-search"><svg class="icon" aria-hidden="true"><use href="/ui/icons.svg#i-search"/></svg><input id="history-search" type="search" placeholder="搜索研究" aria-label="搜索研究历史"></label>
+    <div id="task-list" class="task-list"><div class="rf-skeleton-list" aria-label="正在读取研究历史"><span class="rf-skeleton lg"></span><span class="rf-skeleton lg"></span><span class="rf-skeleton lg w80"></span></div></div>
+    <div class="sidebar-bottom">
+      <button id="btn-logs" class="sidebar-link"><svg class="icon" aria-hidden="true"><use href="/ui/icons.svg#i-scroll-text"/></svg>运行记录</button>
+      <button id="btn-prompts-nav" class="sidebar-link"><svg class="icon" aria-hidden="true"><use href="/ui/icons.svg#i-notebook-pen"/></svg>运行提示词</button>
+      <button id="btn-settings" class="sidebar-link"><svg class="icon" aria-hidden="true"><use href="/ui/icons.svg#i-sliders-horizontal"/></svg>设置</button>
+      <button id="btn-service" class="service-status"><span id="service-dot" class="status-dot"></span><span id="service-label">正在连接服务</span><svg class="icon service-arrow" aria-hidden="true"><use href="/ui/icons.svg#i-chevron-right"/></svg></button>
+      <div class="rf-utility"><a class="rf-utility-link" href="/setup"><svg class="icon" aria-hidden="true"><use href="/ui/icons.svg#i-circle-help"/></svg>使用指南</a><button class="icon-btn rf-theme-toggle" type="button" data-rf-theme-toggle aria-label="切换外观"></button></div>
+    </div>
+  </aside>
+  <div class="workspace">
+    <header class="topbar">
+      <button id="sidebar-toggle" class="icon-btn mobile-only" aria-label="打开任务列表" aria-controls="sidebar" aria-expanded="false"><svg class="icon" aria-hidden="true"><use href="/ui/icons.svg#i-panel-left"/></svg></button>
+      <div class="breadcrumb"><span>研究构想</span><span class="slash">/</span><strong id="breadcrumb-title">新建研究</strong></div>
+      <div class="top-actions"><span id="task-connection" class="connection" role="status"></span>
+        <details id="export-menu" class="export-menu hide"><summary class="btn btn-ghost btn-sm"><svg class="icon" aria-hidden="true"><use href="/ui/icons.svg#i-download"/></svg>导出<svg class="icon caret" aria-hidden="true"><use href="/ui/icons.svg#i-chevron-down"/></svg></summary><div class="menu-items"><button id="btn-report-html"><svg class="icon" aria-hidden="true"><use href="/ui/icons.svg#i-file-text"/></svg>完整报告 · HTML</button><button id="btn-reading-html"><svg class="icon" aria-hidden="true"><use href="/ui/icons.svg#i-book-marked"/></svg>全部构想与提案 · 网页</button><button id="btn-ideas-md"><svg class="icon" aria-hidden="true"><use href="/ui/icons.svg#i-list"/></svg>全部构想 · Markdown</button><button id="btn-md"><svg class="icon" aria-hidden="true"><use href="/ui/icons.svg#i-file-text"/></svg>完整报告 · Markdown</button><button id="btn-json"><svg class="icon" aria-hidden="true"><use href="/ui/icons.svg#i-database"/></svg>完整研究数据 · JSON</button></div></details>
+      </div>
+      <button class="rf-kbar-trigger" type="button" data-rf-kbar aria-label="打开命令面板"><svg class="icon" aria-hidden="true"><use href="/ui/icons.svg#i-search"/></svg><span class="rf-kbar-label">搜索</span><kbd data-rf-kbd>Ctrl K</kbd></button>
+    </header>
+    <main id="main-content" tabindex="-1">
+      <section id="sec-config" class="compose-view">
+        <div class="compose-heading"><h1>你想研究什么？</h1><p>输入一个主题，自动完成构想、评审、文献检索与提案。</p></div>
+        <div class="composer">
+          <label for="topic" class="sr-only">研究主题</label>
+          <textarea id="topic" rows="4" maxlength="4000" placeholder="例如：人工智能如何改变金融市场的信息效率？"></textarea>
+          <div class="compose-toolbar"><div class="quantity-controls"><div class="count-control"><label for="cnt-val">构想数量</label><button id="cnt-minus" class="icon-btn" aria-label="减少构想数量">−</button><input id="cnt-val" type="number" min="0" max="100" step="1" value="20" inputmode="numeric"><button id="cnt-plus" class="icon-btn" aria-label="增加构想数量">＋</button></div><div class="count-control"><label for="select-val">筛选数量</label><button id="select-minus" class="icon-btn" aria-label="减少筛选数量">−</button><input id="select-val" type="number" min="0" max="100" step="1" value="5" inputmode="numeric"><button id="select-plus" class="icon-btn" aria-label="增加筛选数量">＋</button></div></div><button class="btn btn-primary" id="btn-run" disabled><span>开始研究</span><svg class="icon" aria-hidden="true"><use href="/ui/icons.svg#i-arrow-right"/></svg></button></div>
+        </div>
+        <div class="compose-footer"><span id="run-hint" role="status">正在连接研究服务…</span><span class="keyboard-hint"><kbd>Ctrl</kbd><kbd>Enter</kbd> 开始</span></div>
+        <p id="count-hint" class="count-hint" role="status"></p>
+        <div id="readiness" class="readiness" aria-label="开始前的准备">
+          <div class="ready-item" id="ready-api" data-state="loading">
+            <span class="ready-icon"><svg class="icon" aria-hidden="true"><use href="/ui/icons.svg#i-key-round"/></svg></span>
+            <div class="ready-text"><strong>分析接口</strong><span id="ready-api-text">正在检查…</span></div>
+            <a id="ready-api-action" class="btn btn-ghost btn-sm" href="/papers/?panel=settings" hidden>去配置</a>
+          </div>
+          <div class="ready-item" id="ready-corpus" data-state="loading">
+            <span class="ready-icon"><svg class="icon" aria-hidden="true"><use href="/ui/icons.svg#i-database"/></svg></span>
+            <div class="ready-text"><strong>文献库</strong><span id="ready-corpus-text">正在检查…</span></div>
+            <div class="ready-actions"><button id="ready-ideas-only" class="btn btn-ghost btn-sm" type="button" hidden>只生成构想</button><button id="ready-corpus-action" class="btn btn-ghost btn-sm" type="button" hidden>准备检索</button></div>
+          </div>
+        </div>
+        <ol class="workflow-preview" aria-label="研究流程">
+          <li><span class="wf-num">1</span><b>构想</b><small>批量生成</small></li>
+          <li><span class="wf-num">2</span><b>评审</b><small>七维评分</small></li>
+          <li><span class="wf-num">3</span><b>文献</b><small>中英文检索</small></li>
+          <li><span class="wf-num">4</span><b>判断与提案</b><small>核对研究空白</small></li>
+          <li><span class="wf-num">5</span><b>完整报告</b><small>离线导出</small></li>
+        </ol>
+      </section>
+      <div id="research-view" class="research-view hide">
+        <header class="research-heading"><div><div class="eyebrow" id="task-date"></div><h1 id="task-title">正在读取研究…</h1><div class="task-meta"><span id="task-badge" class="status idle">读取中</span><span id="task-summary"></span></div></div><div class="research-actions"><button id="btn-resume" class="btn btn-primary task-resume hide">继续研究</button><button id="btn-stop" class="btn btn-ghost hide">停止</button></div></header>
+        <details id="task-topic" class="task-topic hide" data-view-key="research-topic"><summary>研究说明</summary><p id="task-topic-text"></p></details>
+        <div id="task-status" class="task-message" role="status"></div>
+        <nav id="stage-tabs" class="stage-tabs" role="tablist" aria-label="研究阶段">
+          <button class="step selected" id="tab-1" data-step="1" role="tab" aria-selected="true" aria-controls="sec-1"><span class="step-number">01</span>构想<span id="sub-1" class="step-count"></span></button>
+          <button class="step" id="tab-2" data-step="2" role="tab" aria-selected="false" aria-controls="sec-2" tabindex="-1"><span class="step-number">02</span>评审<span id="sub-2" class="step-count"></span></button>
+          <button class="step" id="tab-3" data-step="3" role="tab" aria-selected="false" aria-controls="sec-3" tabindex="-1"><span class="step-number">03</span>文献<span id="sub-3" class="step-count"></span></button>
+          <button class="step" id="tab-4" data-step="4" role="tab" aria-selected="false" aria-controls="sec-4" tabindex="-1"><span class="step-number">04</span>判断与提案<span id="sub-4" class="step-count"></span></button>
+          <button class="step" id="tab-5" data-step="5" role="tab" aria-selected="false" aria-controls="sec-5" tabindex="-1"><span class="step-number">05</span>完整报告<span id="sub-5" class="step-count"></span></button>
+        </nav>
+        <section id="sec-1" class="stage-panel" role="tabpanel" aria-labelledby="tab-1"><div class="section-toolbar"><h2>初步构想</h2><span id="s1-status" class="status idle"></span></div><div id="s1-body" class="stage-body"></div></section>
+        <section id="sec-2" class="stage-panel" role="tabpanel" aria-labelledby="tab-2" hidden><div class="section-toolbar"><h2>评审排名</h2><span id="s2-status" class="status idle"></span></div><div id="s2-body" class="stage-body"></div></section>
+        <section id="sec-3" class="stage-panel" role="tabpanel" aria-labelledby="tab-3" hidden><div class="section-toolbar"><h2>相关文献</h2><span id="s3-status" class="status idle"></span></div><div id="s3-body" class="stage-body"></div></section>
+        <section id="sec-4" class="stage-panel" role="tabpanel" aria-labelledby="tab-4" hidden><div class="section-toolbar"><h2>文献判断与研究提案</h2><span id="s4-status" class="status idle"></span></div><div id="s4-body" class="stage-body"></div></section>
+        <section id="sec-5" class="stage-panel" role="tabpanel" aria-labelledby="tab-5" hidden>
+          <div class="section-toolbar"><h2>完整报告</h2><span id="s5-status" class="status idle">尚未导出</span></div>
+          <div id="s5-body" class="report-export-card">
+            <p>汇总构想、评审、文献、判断与提案为一份 HTML，支持目录、搜索、离线阅读与打印。</p>
+            <p id="report-scope" class="muted"></p>
+            <div class="report-export-actions"><button id="btn-generate-report" class="btn btn-primary">导出 HTML</button><a id="report-preview" class="btn btn-ghost hide" target="_blank" rel="noopener noreferrer">预览报告</a><a id="report-download" class="btn btn-ghost hide" download>下载 HTML</a></div>
+            <p id="report-message" role="status" aria-live="polite">正在读取导出状态…</p><progress id="report-progress" class="hide" max="100" value="0" aria-label="报告导出进度"></progress><p id="report-error" class="error-text"></p>
+            <p id="report-progress-text" class="report-export-note"></p><details id="report-issues" class="hide"><summary>查看需要修订的内容</summary><ul id="report-issues-list"></ul></details>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+  <dialog id="settings-dialog" class="dialog settings-dialog"><div class="dialog-head"><h2>设置</h2><button class="icon-btn" data-close="settings-dialog" aria-label="关闭设置"><svg class="icon" aria-hidden="true"><use href="/ui/icons.svg#i-x"/></svg></button></div><div class="dialog-body">
+    <section id="sec-preparation" class="settings-section"><div class="section-toolbar"><h3>文献库</h3><span id="prep-message" class="muted">正在连接…</span></div><progress id="prep-progress" max="100" value="0"></progress><p id="prep-counts" class="muted"></p><p id="prep-error" class="error-text"></p><button id="btn-prepare" class="btn btn-ghost hide">继续准备</button></section>
+    <section class="settings-section"><h3>共享 API</h3><p class="hint">与论文精读共用接口地址与密钥。</p><a class="btn btn-ghost" href="/papers/?panel=settings"><svg class="icon" aria-hidden="true"><use href="/ui/icons.svg#i-key-round"/></svg>管理共享 API 配置</a></section><section class="settings-section"><h3>阶段模型</h3><dl class="model-list"><dt>构想</dt><dd id="model-gen">读取中…</dd><dt>评审</dt><dd id="model-judge">读取中…</dd><dt>提案</dt><dd id="model-opt">读取中…</dd></dl></section>
+    <section class="settings-section"><h3>并行运行</h3><p id="concurrency-status" class="hint">正在读取运行配置…</p><p class="hint">可同时提交多项研究；停止只影响当前研究，已返回的结果会保存。</p></section>
+    <section class="settings-section settings-row"><div><h3>提示词</h3><p class="muted">构想、评审与提案阶段的指令</p></div><button id="btn-prompts" class="btn btn-ghost">管理提示词</button></section>
+    <section class="settings-section"><h3>构想存档</h3><p id="idea-csv-status" class="muted">读取中…</p><p id="worker-error" class="error-text"></p></section>
+  </div></dialog>
+  <dialog id="log-dialog" class="dialog log-dialog"><div class="dialog-head"><h2>运行记录</h2><button class="icon-btn" data-close="log-dialog" aria-label="关闭运行记录"><svg class="icon" aria-hidden="true"><use href="/ui/icons.svg#i-x"/></svg></button></div><div id="cbody" class="cbody"><p class="muted">暂无运行记录</p></div></dialog>
+  <dialog id="pm-modal" class="dialog pm-modal" aria-labelledby="pm-title"><div class="dialog-head"><h2 id="pm-title">提示词管理</h2><span class="muted" id="pm-authbadge"></span><button class="btn btn-ghost btn-sm" id="pm-close">关闭</button></div><div class="dialog-body" id="pm-body"></div><div class="dialog-foot hide" id="pm-foot"><button class="btn btn-primary btn-sm" id="pm-save">保存提示词</button><button class="btn btn-ghost btn-sm" id="pm-logout">退出登录</button><span class="msg" id="pm-msg"></span></div></dialog>
+  <dialog id="reading-bridge-dialog" class="dialog reading-bridge-dialog" aria-labelledby="bridge-title">
+    <div class="dialog-head"><div><h2 id="bridge-title">连接本地原文</h2><p id="bridge-reference"></p></div><button class="icon-btn" id="bridge-close" aria-label="关闭本地原文选择"><svg class="icon" aria-hidden="true"><use href="/ui/icons.svg#i-x"/></svg></button></div>
+    <div class="dialog-body"><p id="bridge-notice" class="hint"></p><form id="bridge-search-form" class="bridge-search"><input id="bridge-query" type="search" maxlength="400" aria-label="检索这篇参考文献的本地原文" placeholder="输入完整题名或几个关键词"><button class="btn btn-ghost" id="bridge-search"><svg class="icon" aria-hidden="true"><use href="/ui/icons.svg#i-search"/></svg>搜索本地论文库</button></form>
+    <p class="bridge-help">核对题目、作者与版本后再载入；搜索与载入不调用模型。</p>
+    <div class="bridge-columns"><div id="bridge-candidates" class="bridge-candidates"></div><section class="bridge-preview"><h3 id="bridge-paper-title">选择一份原文</h3><p id="bridge-paper-meta" class="hint"></p><p id="bridge-paper-path" class="hint"></p><pre id="bridge-paper-text">选择候选文件后，可以核对论文正文。</pre></section></div>
+    <label class="bridge-confirm" id="bridge-confirm-label" hidden><input type="checkbox" id="bridge-confirm">我已核对题目、作者及版本，确认这是该参考文献的原文</label><p id="bridge-error" class="error-text" role="alert"></p></div>
+    <div class="dialog-foot"><span class="hint">将附带对应构想，供精读对比。</span><div class="bridge-footer-actions"><button id="bridge-import" class="btn btn-primary" disabled>载入论文精读 ↗</button></div></div>
+  </dialog>
+  <div id="toast" role="status" hidden></div>
+</body>
+</html>

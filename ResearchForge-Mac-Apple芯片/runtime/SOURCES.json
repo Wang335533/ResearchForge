@@ -1,0 +1,21 @@
+{
+  "distribution": "Mac Apple silicon",
+  "components": [
+    {
+      "name": "cpython-3.12.14+20260929-aarch64-apple-darwin-install_only_stripped.tar.gz",
+      "browser_download_url": "https://github.com/astral-sh/python-build-standalone/releases/download/20260929/cpython-3.12.14%2B20260929-aarch64-apple-darwin-install_only_stripped.tar.gz",
+      "size": 25017608,
+      "digest": "sha256:1bb3e53d231ee2c8881e8daf6426f4dd95bff0dda496af0f3af300357aa998d0"
+    },
+    {
+      "name": "ollama-darwin.tgz",
+      "browser_download_url": "https://github.com/ollama/ollama/releases/download/v0.35.0/ollama-darwin.tgz",
+      "size": 160167937,
+      "digest": "sha256:2608dbb0a0f0136a198db9d48b4f74ece55f452314a39452fca35b7cf20c2589"
+    }
+  ],
+  "python_dependencies": "../requirements.lock.txt",
+  "model_registry": "https://registry.ollama.ai/v2/library/qwen3-embedding/manifests/0.6b",
+  "model_license": "licenses/Qwen3-Embedding-APACHE-2.0.txt",
+  "private_data_included": false
+}

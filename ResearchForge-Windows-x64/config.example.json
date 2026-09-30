@@ -1,0 +1,34 @@
+{
+  "port": 8331,
+  "workspace": "user_data",
+  "corpus": "user_data/corpus.csv",
+  "papers": "user_data/papers",
+  "prompt_import": "user_data/prompt-import",
+  "auto_prepare": false,
+  "ollama_host": "http://127.0.0.1:11434",
+  "embedding_model": "qwen3-embedding:0.6b",
+  "stages": {
+    "gen": {
+      "provider": "deepseek",
+      "model": "deepseek-flash",
+      "thinking": "enabled",
+      "temperature": null
+    },
+    "judge": {
+      "provider": "deepseek",
+      "model": "deepseek-flash",
+      "thinking": "enabled",
+      "temperature": null
+    },
+    "opt": {
+      "provider": "deepseek",
+      "model": "deepseek-flash",
+      "thinking": "enabled",
+      "temperature": null
+    }
+  },
+  "languages": [
+    "zh",
+    "en"
+  ]
+}

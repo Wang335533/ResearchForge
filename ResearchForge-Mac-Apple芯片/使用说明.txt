@@ -1,0 +1,14 @@
+ResearchForge 解压即用版
+
+适用：苹果 M 系列芯片，macOS 14 或更新版本
+
+完整解压后，双击 START-MAC.command。
+无需安装 Python、依赖或 Ollama。浏览器会自动打开。
+
+先在「论文精读 → 共享 API 设置」填写自己的 API，再上传论文。
+
+保持启动窗口打开。按 Ctrl+C 停止。
+
+给同学分享，请发送最初的压缩包，不要发送已经使用过的 user_data。
+
+详细说明见 README.md。

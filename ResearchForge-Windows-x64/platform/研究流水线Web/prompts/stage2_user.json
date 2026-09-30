@@ -1,0 +1,5 @@
+{
+  "name": "stage2_user",
+  "description": "可按自己的学科修改；输出字段须与接口保持一致",
+  "content": "对以下 {n} 个构想评审，恰好保留 {selection_count} 个，按总分降序排列，rank 从1连续编号；id 必须是输入中存在且不重复的编号。\n{ideas_block}\n七维整数评分及上限：importance 20、insight 20、mechanism 20、dialogue 15、testability 10、policy 10、expression 5。total 必须等于七项相加。hook 说明最值得追问的点，reason 解释评分、证据缺口与可行性。\n输出结构：{{\n  \"top5\": [\n    {{\n      \"rank\": 1,\n      \"id\": 1,\n      \"scores\": {{\n        \"importance\": 15,\n        \"insight\": 15,\n        \"mechanism\": 15,\n        \"dialogue\": 10,\n        \"testability\": 7,\n        \"policy\": 7,\n        \"expression\": 4\n      }},\n      \"total\": 73,\n      \"hook\": \"关键问题\",\n      \"reason\": \"具体理由\"\n    }}\n  ]\n}}"
+}

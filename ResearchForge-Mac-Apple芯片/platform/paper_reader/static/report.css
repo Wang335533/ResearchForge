@@ -1,0 +1,52 @@
+/* Report typography. Also embedded in exported HTML, where the workspace tokens are absent: keep fallbacks. */
+.report {
+  font-family: var(--rf-font, -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif);
+  color: var(--rf-text, #25352e); line-height: 1.95; font-size: 16px; overflow-wrap: anywhere;
+}
+.report h1 {
+  margin: 36px 0 20px; padding-bottom: 12px;
+  border-bottom: 1px solid var(--rf-line, #dce5d8);
+  font-size: 1.5em; line-height: 1.5; font-weight: 650; letter-spacing: -.3px;
+}
+.report h1:first-child { margin-top: 0; }
+.report h2 { margin: 32px 0 12px; font-size: 1.14em; line-height: 1.6; font-weight: 650; scroll-margin-top: 100px; }
+.report h2::before { content: ''; display: inline-block; width: 4px; height: .9em; margin-right: 10px; vertical-align: -.08em; border-radius: 2px; background: var(--rf-accent-mid, #56ba9f); }
+.report h3 { margin: 22px 0 10px; font-size: 1em; font-weight: 650; scroll-margin-top: 100px; }
+.report h4 { margin: 18px 0 8px; font-size: 1em; }
+.report p { margin: 0 0 16px; }
+.report ul, .report ol { margin: 12px 0 20px; padding-left: 1.6em; }
+.report li { margin: 6px 0; }
+.report li::marker { color: var(--rf-accent-text, #2d6654); }
+.report li p { margin: 4px 0; }
+.report a { color: var(--rf-accent-text, #2d6654); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--rf-accent-line, #aedcc6); }
+.report blockquote {
+  margin: 20px 0; padding: 12px 20px;
+  border-left: 3px solid var(--rf-accent-mid, #90ad93); border-radius: 0 8px 8px 0;
+  background: var(--rf-accent-soft, #f0f5ee); color: var(--rf-text-2, #52665a);
+}
+.report blockquote p:last-child { margin: 0; }
+.report table { display: block; max-width: 100%; margin: 22px 0; overflow-x: auto; border-collapse: collapse; font-size: .875em; }
+.report th, .report td { min-width: 100px; padding: 10px 14px; border: 1px solid var(--rf-line, #dce4d9); text-align: left; vertical-align: top; }
+.report th { background: var(--rf-surface-2, #f0f4ed); font-weight: 600; }
+.report tr:nth-child(even) td { background: var(--rf-bg-subtle, #fafcf9); }
+.report code { padding: 2px 5px; border-radius: 4px; background: var(--rf-surface-3, #eef3ec); font-family: var(--rf-font-mono, ui-monospace, SFMono-Regular, Menlo, monospace); font-size: .85em; }
+.report pre { overflow: auto; padding: 18px; border: 1px solid var(--rf-line, #dce4d9); border-radius: 8px; background: var(--rf-surface-2, #f0f4ed); line-height: 1.7; white-space: pre-wrap; }
+.report pre code { padding: 0; background: transparent; }
+.report hr { margin: 28px 0; border: 0; border-top: 1px solid var(--rf-line, #dce4d9); }
+.report strong { font-weight: 650; color: var(--rf-text, inherit); }
+.report.standalone { max-width: 940px; margin: 50px auto; padding: 0 35px 60px; }
+.report sup { font-size: .7em; }
+.report .katex-display { max-width: 100%; padding: 9px 0; overflow-x: auto; overflow-y: hidden; }
+.report .katex { font-size: 1.08em; }
+.report .arithmatex { overflow-wrap: normal; }
+@media print {
+  .report { color: #111; font-size: 11pt; }
+  .report.standalone { max-width: none; margin: 0; padding: 0; }
+  .report h1, .report h2, .report h3 { break-after: avoid; }
+  .report table { display: table; width: 100%; font-size: 9pt; }
+  .report tr { break-inside: avoid; }
+  .report a { color: inherit; }
+  .report pre { white-space: pre-wrap; }
+  body { margin: 0; }
+  @page { size: A4; margin: 20mm 18mm; }
+}
