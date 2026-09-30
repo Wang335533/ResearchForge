@@ -2,7 +2,7 @@ ResearchForge 解压即用版
 
 适用：64 位 Windows 10 / Windows 11（x64）
 
-完整解压后，双击 START-WINDOWS.cmd。
+完整解压到路径较短的文件夹（例如 D:\ResearchForge）后，双击 START-WINDOWS.cmd。
 无需安装 Python、依赖或 Ollama。浏览器会自动打开。
 
 先在「论文精读 → 共享 API 设置」填写自己的 API，再上传论文。
