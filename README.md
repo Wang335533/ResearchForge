@@ -8,8 +8,10 @@
 
 | 版本 | 适用电脑 | 启动入口 |
 |---|---|---|
-| `ResearchForge-Mac-Apple芯片.zip` | 苹果 M 系列芯片，macOS 14 或更新 | `START-MAC.command` |
+| `ResearchForge-Mac-AppleSilicon.zip` | 苹果 M 系列芯片，macOS 14 或更新 | `START-MAC.command` |
 | `ResearchForge-Windows-x64.zip` | 64 位 Windows 10 / 11 | `START-WINDOWS.cmd` |
+
+Windows 版请解压到路径较短的文件夹（例如 `D:\ResearchForge`）。
 
 分析论文和生成构想使用你自己配置的 API（兼容 Chat Completions），包里没有任何人的密钥。嵌入检索、文献地图和提示词库都在本机完成。
 
