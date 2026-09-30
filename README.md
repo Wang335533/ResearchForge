@@ -2,6 +2,12 @@
 
 本地优先的研究工作台：从研究主题生成构想、评审排序、检索文献并形成提案；精读论文并与自己的研究对照；把读过的文献沉淀为文献地图；收藏和复用提示词。
 
+![研究构想：文献判断与研究提案](screenshots/research.png)
+
+![论文精读报告（深色模式）](screenshots/reading-dark.png)
+
+<sub>截图为实际运行界面，内容为虚构的示例数据。</sub>
+
 ## 下载
 
 到 [Releases](https://github.com/Wang335533/ResearchForge/releases/latest) 下载与电脑匹配的解压即用包，完整解压后双击启动入口即可，无需安装 Python、依赖或 Ollama。
