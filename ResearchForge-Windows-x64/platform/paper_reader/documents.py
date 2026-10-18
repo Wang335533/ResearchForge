@@ -43,7 +43,10 @@ def extract_document(path, filename):
     elif suffix in ('.md', '.markdown', '.txt'):
         raw = Path(path).read_bytes()
         content = None
-        for encoding in ('utf-8-sig', 'utf-16', 'gb18030'):
+        # Without a BOM, arbitrary even-length GB text also decodes as UTF-16,
+        # producing convincing-looking garbage instead of the uploaded paper.
+        encodings = ('utf-16',) if raw.startswith((b'\xff\xfe', b'\xfe\xff')) else ('utf-8-sig', 'gb18030')
+        for encoding in encodings:
             try:
                 candidate = raw.decode(encoding)
                 if '\x00' not in candidate:

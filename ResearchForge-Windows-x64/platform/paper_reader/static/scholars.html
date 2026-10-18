@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#ebe5d8" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#100f0d" media="(prefers-color-scheme: dark)"><title>[[product]] · 学者统计</title><link rel="icon" href="/ui/favicon.svg" type="image/svg+xml"><script src="/ui/boot.js"></script><link rel="stylesheet" href="/ui/fonts.css"><link rel="stylesheet" href="/ui/tokens.css"><link rel="stylesheet" href="/ui/base.css"><link rel="stylesheet" href="/ui/components.css"><link rel="stylesheet" href="/ui/shell.css"><link rel="stylesheet" href="/ui/motion.css"><link rel="stylesheet" href="/static/notebook.css"><link rel="stylesheet" href="/static/report.css"><link rel="stylesheet" href="/static/vendor/katex/katex.min.css"><script src="/static/vendor/katex/katex.min.js" defer></script><script src="/static/vendor/katex/auto-render.min.js" defer></script><script src="/ui/ambient.js" defer></script><script src="/ui/motion.js" defer></script><script src="/ui/shell.js" defer></script><script src="/static/reading-knowledge.js" defer></script></head>
+<body data-notebook="scholars">
+<aside class="sidebar" id="sidebar" aria-label="工作台导航">
+  <a class="brand" href="/"><span class="brand-mark" aria-hidden="true"></span><span>[[product]]<small>[[product_sub]]</small></span></a>
+  <!-- workspace-navigation -->
+  <div class="side-note"><strong>按独立论文统计</strong><span>同一篇论文多次精读只计一次</span><span>只统计署名作者，不含被引学者</span></div>
+  <div class="sidebar-bottom"><a class="sidebar-link" data-base="/api/memory/backup"><svg class="icon" aria-hidden="true"><use href="/ui/icons.svg#i-download"/></svg>备份文献与变量记录</a><p class="storage-note">保存在本机 · 随精读持续积累</p><div class="rf-utility"><a class="rf-utility-link" href="/setup"[[guide_hidden]]><svg class="icon" aria-hidden="true"><use href="/ui/icons.svg#i-circle-help"/></svg>使用指南</a><button class="icon-btn" type="button" data-rf-motion-toggle aria-label="切换动效"></button><button class="icon-btn rf-theme-toggle" type="button" data-rf-theme-toggle aria-label="切换外观"></button></div></div>
+</aside>
+<div class="workspace">
+  <header class="topbar"><button id="notebook-menu" class="icon-btn mobile" aria-label="展开导航"><svg class="icon" aria-hidden="true"><use href="/ui/icons.svg#i-panel-left"/></svg></button><div class="breadcrumb"><span>论文精读</span><span>/</span><strong>学者统计</strong></div><button class="rf-kbar-trigger" type="button" data-rf-kbar aria-label="打开命令面板"><svg class="icon" aria-hidden="true"><use href="/ui/icons.svg#i-search"/></svg><span class="rf-kbar-label">搜索</span><kbd data-rf-kbd>Ctrl K</kbd></button></header>
+  <main class="notebook-main">
+    <header class="notebook-heading"><div><p class="rf-eyebrow">论文精读 · 学者统计</p><h1 data-rf-split>把读过的学者，连起来。</h1><p>从作者回看论文、合作者与研究领域。</p></div><div class="notebook-actions"><a class="btn btn-secondary" data-base="/#directory"><svg class="icon" aria-hidden="true"><use href="/ui/icons.svg#i-list"/></svg>已读目录</a><a class="btn btn-secondary" data-base="/api/scholars-export"><svg class="icon" aria-hidden="true"><use href="/ui/icons.svg#i-download"/></svg>导出统计</a></div><i class="rf-vignette notebook-art" data-v="atlas" aria-hidden="true"></i></header>
+    <div id="notebook-stats" class="notebook-stats"></div>
+    <form id="notebook-search" class="notebook-toolbar"><label class="notebook-search"><svg class="icon" aria-hidden="true"><use href="/ui/icons.svg#i-search"/></svg><span class="sr-only">搜索学者或论文</span><input id="notebook-query" type="search" placeholder="搜索学者姓名或论文题名" maxlength="500"></label><select id="notebook-field" aria-label="学术领域"><option value="">全部领域</option></select><select id="notebook-year" aria-label="论文年份"><option value="">全部年份</option></select></form>
+    <div class="notebook-controls"><span id="notebook-message" role="status" class="notebook-message"></span></div>
+    <p id="scholar-note" class="notebook-foot"></p>
+    <details id="missing-authors" class="notebook-missing" hidden><summary>作者信息待补充的论文</summary><div id="missing-author-list"></div></details>
+    <section id="notebook-results" aria-label="检索结果" aria-live="polite"></section>
+    <div class="notebook-pages" id="notebook-pages" hidden><button class="btn btn-secondary btn-sm" id="notebook-prev" type="button">上一页</button><span id="notebook-page"></span><button class="btn btn-secondary btn-sm" id="notebook-next" type="button">下一页</button></div>
+  </main>
+</div>
+<dialog id="notebook-detail" class="dialog notebook-detail"><div class="dialog-head"><div><h2 id="detail-title">详情</h2></div><button type="button" class="icon-btn" data-close="notebook-detail" aria-label="关闭详情"><svg class="icon" aria-hidden="true"><use href="/ui/icons.svg#i-x"/></svg></button></div><div class="dialog-body" id="detail-body"></div><div class="dialog-footer" id="detail-footer"></div></dialog>
+<dialog id="notebook-compare" class="dialog notebook-compare"><div class="dialog-head"><div><h2>比较测量口径</h2><p>同名不代表口径相同；先比定义、分母、窗口与样本。</p></div><button type="button" class="icon-btn" data-close="notebook-compare" aria-label="关闭比较"><svg class="icon" aria-hidden="true"><use href="/ui/icons.svg#i-x"/></svg></button></div><div class="dialog-body" id="compare-body"></div></dialog>
+<div id="toast" role="status" hidden></div>
+</body>
+</html>

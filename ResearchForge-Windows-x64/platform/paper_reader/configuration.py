@@ -1,10 +1,13 @@
 import copy
+import hashlib
 import json
 import time
 import os
 import threading
 from pathlib import Path
 from urllib.parse import urlsplit
+import chatgpt_config
+import chatgpt_oauth
 
 if __package__:
     from .prompts import DEFAULT_PROMPTS
@@ -16,6 +19,19 @@ DATA = Path(os.environ.get('PAPERLENS_DATA_DIR', ROOT / 'data'))
 DATA.mkdir(parents=True, exist_ok=True, mode=0o700)
 CONFIG_PATH = DATA / 'settings.json'
 LOCK = threading.RLock()
+# SHA-256 of earlier shipped defaults (stripped). A saved prompt equal to one of these was never
+# edited, so it is upgraded to the current default (sectioned outline, measurement cards).
+RETIRED_PROMPTS = {
+    'report': {'91280c782cc3c1bc068f8663b9cc376bc26ff4902b84303b1a745b846e4b5f34',
+               'c1a0e924fd4ee55d62ee67b042c1b09f8cacec0aeb8603255c7513179c643632',
+               'b6523eff1f055555bfb0473619d47b427da846719c890d626a49b8a67ae6a999',
+               '8ef8a32452d8994a6472813f9b22fce21c51039bb3a34abcbe78c05d94594ea0',
+               '2baca9f61f41c4fd32e81617540b7d64ec9e0f81fd0115008c4fbc7c05ec991d',
+               'aa93565da66efa2926148b7687d5ae7993b63b423277667d26a022cc8632a9aa'},
+    'extract': {'8e8e591bd3feeaf83898911e3bc88d1f8d5fb30254b89be9afdcd664564c2985'},
+    'memory': {'e05055bc2afd869ddd8f9bd46fa72be15b8f91ae9362f741f5e9510706fce06b',
+               '6889db39aec9fee722916864b7e626975910acc5bfeb8b17b455cf546df692ef'},
+}
 
 
 def replace_file(source, target, attempts=40):
@@ -65,8 +81,21 @@ def settings():
             atomic_json(CONFIG_PATH, initial_settings())
         saved = json.loads(read_text_file(CONFIG_PATH))
         changed = False
+        if chatgpt_config.ENABLED:
+            pid = chatgpt_config.PROVIDER_ID
+            existing = next((p for p in saved['providers'] if p['id'] == pid), None)
+            configured = chatgpt_config.provider_config()
+            # Conversation choices belong to job snapshots, not connection settings.
+            if existing != configured:
+                saved['providers'] = [p for p in saved['providers'] if p['id'] != pid] + [configured]
+                changed = True
+            if existing is None:
+                saved['default_provider'] = pid
         for key, value in DEFAULT_PROMPTS.items():
-            if key not in saved['prompts']:
+            current = saved['prompts'].get(key)
+            # A prompt nobody edited follows the shipped default; an edited one is never replaced.
+            if current is None or (hashlib.sha256(current.strip().encode()).hexdigest() in RETIRED_PROMPTS.get(key, ())
+                                   and current != value):
                 saved['prompts'][key] = value
                 changed = True
         if changed:
@@ -80,7 +109,11 @@ def save_settings(value):
 
 
 def public_provider(p):
-    return {**{k: v for k, v in p.items() if k != 'api_key'}, 'has_key': bool(p.get('api_key'))}
+    return {**{k: v for k, v in p.items() if k != 'api_key'}, 'has_key': provider_ready(p)}
+
+
+def provider_ready(p):
+    return chatgpt_oauth.is_ready() if p.get('auth_type') == 'chatgpt_oauth' else bool(p.get('api_key'))
 
 
 def public_settings():

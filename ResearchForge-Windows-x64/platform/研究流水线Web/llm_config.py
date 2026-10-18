@@ -1,10 +1,17 @@
 """Share edition: no bundled secrets; stage models use the local configuration."""
 import json
 import os
+import chatgpt_config
 PROVIDERS={'deepseek':{'label':'DeepSeek 官方','endpoint':'https://api.deepseek.com/chat/completions','api_key':''}}
 _defaults={stage:dict(provider='deepseek',model='deepseek-flash',temperature=None,thinking='enabled') for stage in ('gen','judge','opt')}
 _overrides=json.loads(os.environ.get('RF_SHARE_STAGES','{}'))
 STAGE_MODELS={stage:{**value,**_overrides.get(stage,{})} for stage,value in _defaults.items()}
+if chatgpt_config.ENABLED:
+    PROVIDERS[chatgpt_config.PROVIDER_ID] = dict(label='ChatGPT 套餐（OAuth）',
+        endpoint=chatgpt_config.BASE_URL + '/responses', api_key='', auth_type='chatgpt_oauth')
+    STAGE_MODELS = {stage: dict(provider=chatgpt_config.PROVIDER_ID, **chatgpt_config.codex_defaults(),
+                              temperature=None, thinking=None)
+                    for stage, model in chatgpt_config.STAGE_MODELS.items()}
 # Additional provider connections are created in the shared API settings UI.
 for config in STAGE_MODELS.values():
     PROVIDERS.setdefault(config['provider'],{'label':config['provider'],'endpoint':'','api_key':''})

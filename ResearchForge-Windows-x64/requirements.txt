@@ -6,3 +6,6 @@ bleach>=6,<7
 Markdown>=3.6,<4
 pymdown-extensions>=10,<11
 pypdf>=5,<7
+openai==3.28.0
+PyJWT[crypto]==2.15.1
+httpx2==2.13.1

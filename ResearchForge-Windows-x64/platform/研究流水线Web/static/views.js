@@ -4,19 +4,26 @@ const DIMS = [['importance','理论重要性',20],['insight','反直觉洞见',2
 
 function emptyStage(n, title, description) {
   const body = $('s' + n + '-body');
-  if (body.children.length) return;
-  body.innerHTML = `<div class="empty-state">${icon('book')}<h3>${esc(title)}</h3><p>${esc(description)}</p></div>`;
+  const signature = JSON.stringify([title, description]);
+  if (body.children.length && body.dataset.emptySignature === signature) return;
+  body.dataset.emptySignature = signature;
+  body.innerHTML = `<div class="empty-state"><i class="rf-vignette" data-v="research" aria-hidden="true"></i><h3>${esc(title)}</h3><p>${esc(description)}</p></div>`;
 }
 function renderIdeas() {
   const root = $('s1-body');
-  if (!S.ideas.length) { emptyStage(1, S.count === 0 ? '空研究' : '构想生成中', S.count === 0 ? '构想数量为 0，未调用模型。' : '生成后显示在这里'); return; }
-  if (!root.querySelector('.idea-list')) root.innerHTML = '<div class="idea-list"></div>';
+  if (!S.ideas.length) {
+    const active = ['running','queued','stopping'].includes(S.task?.status);
+    emptyStage(1, S.count === 0 ? '空研究' : active ? '构想生成中' : '尚未生成构想',
+      S.count === 0 ? '构想数量为 0，没有调用模型。' : active ? '生成一批就显示一批' : '研究已暂停，点右上角“继续研究”即可接着做。');
+    return;
+  }
+  if (!root.querySelector('.idea-list')) root.innerHTML = '<div class="idea-list" data-rf-animate="always"></div>';
   const list = root.querySelector('.idea-list');
   let added = 0;
   S.ideas.forEach((idea, index) => {
     if (list.children[index]) return;
     const key = 'idea-' + idea.id, opened = !!viewState().expanded[key];
-    const article = document.createElement('article'); article.className = 'idea-card rf-reveal';
+    const article = document.createElement('article'); article.className = 'idea-card'; article.dataset.rfKey = String(idea.id);
     article.style.setProperty('--i', Math.min(added++, 12));
     article.innerHTML = `<span class="rank">构想 ${String(index + 1).padStart(2,'0')}</span><h3>${esc(idea.title)}</h3>
       <div id="idea-abstract-${index}" class="abs${opened ? ' open' : ''}">${esc(idea.abstract)}</div>
@@ -42,14 +49,14 @@ function renderTop5() {
     const started = target > 0 && (reviewed > 0 || task?.stage === 2);
     const active = started && ['running','queued','stopping'].includes(task?.status);
     const title = target === 0 ? '已跳过评审' : started ? (active ? '正在评审' : '评审已暂停，结果已保留') : '等待评审';
-    const detail = target === 0 ? '本次未安排筛选。' : started ?
+    const detail = target === 0 ? '这次没有安排精选。' : started ?
       `已评审 ${reviewed} / ${S.count} 个（${batches} 批），完成后展示前 ${target} 名。` :
       '构想完成后开始评审';
     const message = started ? task?.message || '' : '';
     const signature = JSON.stringify(['review-progress',title,detail,message]);
     if (root.dataset.signature !== signature) {
       root.dataset.signature = signature;
-      root.innerHTML = `<div class="empty-state" role="status" aria-live="polite">${icon('book')}<h3>${esc(title)}</h3><p>${esc(detail)}</p>${message ? `<p>${esc(message)}</p>` : ''}</div>`;
+      root.innerHTML = `<div class="empty-state" role="status" aria-live="polite">${icon('star')}<h3>${esc(title)}</h3><p>${esc(detail)}</p>${message ? `<p>${esc(message)}</p>` : ''}</div>`;
     }
     return;
   }
@@ -78,7 +85,7 @@ function resultPicker(root, kind, items, titleOf, onChange) {
     picker.innerHTML = `<label for="${kind}-select">${kind === 'lit' ? '构想' : '结果'}</label><select id="${kind}-select" aria-label="选择${kind === 'lit' ? '文献对应构想' : '文献判断与提案'}"></select>
       <span class="picker-position"></span><button class="icon-btn picker-prev" aria-label="上一${kind === 'lit' ? '组文献' : '项结果'}">‹</button><button class="icon-btn picker-next" aria-label="下一${kind === 'lit' ? '组文献' : '项结果'}">›</button>`;
     root.appendChild(picker);
-    const content = document.createElement('div'); content.id = kind + '-content'; root.appendChild(content);
+    const content = document.createElement('div'); content.id = kind + '-content'; content.dataset.rfAnimate = 'always'; root.appendChild(content);
   }
   const select = picker.querySelector('select');
   // Updating options only when their identities change keeps keyboard focus stable.
@@ -176,7 +183,7 @@ function renderProposals() {
     ${proposal.theoretical_foundation ? `<section class="article-section"><h3>对应理论</h3><p class="prose">${esc(proposal.theoretical_foundation)}</p></section>` : ''}
     <section class="article-section"><h3>研究假说与理论贡献</h3>${hypotheses}</section>
     ${proposal.improvement_notes ? `<details class="improvement" data-view-key="improvements-${esc(item.id)}"><summary>相对原构想的改进</summary><p class="prose">${esc(proposal.improvement_notes)}</p></details>` : ''}
-    <div class="article-actions"><button class="btn btn-ghost p-export">${icon('download')}导出此提案</button><button class="text-btn show-original">查看原构想</button></div></article>
+    <div class="article-actions"><button class="btn btn-secondary p-export">${icon('download')}导出此提案</button><button class="text-btn show-original">查看原构想</button></div></article>
     <aside class="references-panel" aria-label="提案参考文献"><h3>参考文献 <span class="muted">${refs.length}</span></h3><p class="hint">书目已匹配，内容仍需核验。</p>${referenceCards || '<p class="muted">暂无参考文献</p>'}</aside></div>`;
   content.querySelector('.p-export').onclick = () => download(`proposal_top${item.judge.rank || 1}.md`, proposalMd(item.judge, proposal));
   content.querySelector('.show-original').onclick = () => {

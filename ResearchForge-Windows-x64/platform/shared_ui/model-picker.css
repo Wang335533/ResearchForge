@@ -1,0 +1,39 @@
+/* Conversation controls: model and reasoning effort chips with a popover menu. */
+.rf-model-picker { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font: var(--rf-text-sm)/1.2 var(--rf-font); color: var(--rf-text-2); }
+.rf-model-picker[hidden], .rf-model-menu[hidden] { display: none; }
+.rf-model-picker > button {
+  display: inline-flex; align-items: center; gap: 6px; min-height: 30px; padding: 0 12px;
+  border: 1px solid var(--rf-line); border-radius: var(--rf-r-full); background: var(--rf-surface);
+  color: var(--rf-text); font: inherit; font-weight: 600; white-space: nowrap;
+  transition: border-color var(--rf-dur-2), background-color var(--rf-dur-2), transform var(--rf-dur-3) var(--rf-ease-spring), box-shadow var(--rf-dur-2);
+}
+.rf-model-picker > button::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--rf-accent-mid); box-shadow: 0 0 0 3px var(--rf-accent-soft); }
+.rf-model-picker > button + button { font-weight: 500; color: var(--rf-text-3); }
+.rf-model-picker > button + button::before { background: var(--rf-ochre); box-shadow: 0 0 0 3px var(--rf-ochre-soft); }
+.rf-model-picker > button:hover:not(:disabled) { border-color: var(--rf-line-strong); box-shadow: var(--rf-shadow-xs); transform: translateY(-1px); }
+.rf-model-picker > button[aria-expanded="true"] { border-color: var(--rf-accent-line); background: var(--rf-accent-soft); }
+.rf-model-picker button:focus-visible, .rf-model-menu button:focus-visible { outline: 2px solid var(--rf-focus); outline-offset: 1px; }
+.rf-model-picker button:disabled { opacity: .55; cursor: progress; }
+.rf-model-picker[aria-busy="true"] > button:first-child::before { animation: rf-pulse 1.1s ease-in-out infinite; }
+.rf-model-menu {
+  position: fixed; inset: auto; margin: 0; padding: 6px; width: 300px; max-width: calc(100vw - 16px); max-height: calc(100vh - 16px);
+  overflow: auto; border: 1px solid var(--rf-line); border-radius: var(--rf-r-lg); background: var(--rf-raised); color: var(--rf-text);
+  box-shadow: var(--rf-shadow-lg); font: var(--rf-text-sm) var(--rf-font);
+  opacity: 0; scale: .96; transition: opacity var(--rf-dur-2), scale var(--rf-dur-3) var(--rf-ease-spring), overlay var(--rf-dur-2) allow-discrete, display var(--rf-dur-2) allow-discrete;
+}
+.rf-model-menu:popover-open { opacity: 1; scale: 1; }
+@starting-style { .rf-model-menu:popover-open { opacity: 0; scale: .96; } }
+.rf-model-heading { padding: 8px 10px 6px; color: var(--rf-text-4); font-size: 11px; font-weight: 600; letter-spacing: .1em; }
+.rf-model-menu button { font: inherit; cursor: pointer; border: 0; background: transparent; color: inherit; }
+.rf-model-option { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 38px; padding: 8px 10px; border-radius: var(--rf-r); text-align: left; transition: background-color var(--rf-dur-1); }
+.rf-model-option > span { margin-left: auto; color: var(--rf-accent-text); font-weight: 700; }
+.rf-model-option > small { max-width: 150px; font-size: 10px; color: var(--rf-text-4); }
+.rf-model-option:hover:not(:disabled), .rf-model-option:focus-visible { background: var(--rf-hover); }
+.rf-model-option[aria-checked="true"] { background: var(--rf-accent-soft); font-weight: 600; }
+.rf-model-option:disabled { opacity: .45; cursor: not-allowed; }
+.rf-model-menu-footer { display: flex; justify-content: space-between; margin-top: 6px; padding: 6px 2px 0; border-top: 1px solid var(--rf-line-soft); }
+.rf-model-menu-footer button { padding: 7px 9px; border-radius: var(--rf-r-sm); color: var(--rf-text-3); font-size: var(--rf-text-xs); }
+.rf-model-menu-footer button:hover { background: var(--rf-hover); color: var(--rf-text); }
+.rf-model-notice { width: 100%; color: var(--rf-text-3); font-size: var(--rf-text-xs); line-height: 1.6; }
+.rf-model-notice:empty { display: none; }
+#connection-fields[hidden] { display: none; }

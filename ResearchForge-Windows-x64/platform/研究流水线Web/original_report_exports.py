@@ -64,15 +64,15 @@ class OriginalReportExports(ReportExports):
     def _run(self, record, handle):
         version = record['version']
         try:
-            record.update(status='running', phase='rendering', message='正在生成 HTML 排版与目录…')
+            record.update(status='running', phase='rendering', message='正在排版…')
             write_json(self.job_path(version), record)
             document = render_report(record['task'], {}, preserve_original=True)
             atomic_write(self.root/'reports'/(version+'.html'), document)
             record.update(status='completed', phase='completed', completed=1, finished_at=time.time(),
-                          message='完整 HTML 报告已生成，全部内容按原文保留，可预览或下载。', error=None)
+                          message='报告已生成，可以预览或下载', error=None)
         except Exception as error:
             record.update(status='failed', error=self.sanitize(str(error)), finished_at=time.time(),
-                          message='本地报告生成失败；研究结果仍完整保存，可重新导出。')
+                          message='生成失败，研究结果没有受影响，可以重新导出')
         finally:
             try:
                 write_json(self.job_path(version), record)

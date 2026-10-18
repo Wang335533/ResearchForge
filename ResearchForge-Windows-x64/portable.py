@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import contextlib
+import faulthandler
 import hashlib
 import importlib
 import json
@@ -15,6 +16,7 @@ import subprocess
 import sys
 import threading
 import time
+import traceback
 import urllib.request
 import webbrowser
 
@@ -49,7 +51,7 @@ def self_check():
     if not executable.is_file():
         raise RuntimeError('缺少随包提供的检索引擎，请完整解压压缩包。')
     manifest_path = ROOT / 'runtime/models/manifests/registry.ollama.ai/library/qwen3-embedding/0.6b'
-    manifest = json.loads(manifest_path.read_text())
+    manifest = json.loads(manifest_path.read_text(encoding='utf-8'))
     for layer in [manifest['config'], *manifest['layers']]:
         blob = ROOT / 'runtime/models/blobs' / layer['digest'].replace(':', '-')
         if not blob.is_file() or blob.stat().st_size != layer['size']:
@@ -84,7 +86,7 @@ def instance_lock(workspace):
 
 def existing_url(state_file, instance_id):
     try:
-        state = json.loads(state_file.read_text())
+        state = json.loads(state_file.read_text(encoding='utf-8'))
         port = state['port']
         if type(port) is not int or not 1024 <= port <= 65535:
             return None
@@ -130,10 +132,57 @@ def windows_job(child):
     return lambda: kernel.CloseHandle(job)
 
 
+def start_background(workspace, instance_id, args):
+    """The launcher may exit without closing the web server's console/stdio."""
+    state_file = workspace / 'portable-state.json'
+    url = existing_url(state_file, instance_id)
+    if url:
+        print('此工作台已经启动：' + url, flush=True)
+        if not args.no_browser:
+            webbrowser.open(url)
+        return
+    logs = workspace / 'logs'
+    logs.mkdir(parents=True, exist_ok=True)
+    name = 'service-' + time.strftime('%Y%m%d-%H%M%S') + '-' + str(os.getpid())
+    stdout_path, stderr_path = logs / (name + '.stdout.log'), logs / (name + '.stderr.log')
+    command = [sys.executable, '-I', '-B', '-X', 'utf8', str(ROOT / 'portable.py'), '--no-browser']
+    if args.workspace:
+        command += ['--workspace', str(workspace)]
+    if args.port:
+        command += ['--port', str(args.port)]
+    options = ({'creationflags': subprocess.CREATE_NO_WINDOW | subprocess.CREATE_NEW_PROCESS_GROUP}
+               if os.name == 'nt' else {'start_new_session': True})
+    with stdout_path.open('ab') as stdout, stderr_path.open('ab') as stderr:
+        child = subprocess.Popen(command, cwd=ROOT, stdin=subprocess.DEVNULL,
+                                 stdout=stdout, stderr=stderr, **options)
+    print('正在后台启动工作台，日志：' + str(stderr_path), flush=True)
+    for _ in range(120):
+        url = existing_url(state_file, instance_id)
+        if url:
+            print('工作台地址：' + url + '（可以关闭此窗口）', flush=True)
+            if not args.no_browser:
+                webbrowser.open(url)
+            return
+        if child.poll() is not None:
+            raise RuntimeError('后台启动进程已退出，请查看日志：' + str(stderr_path))
+        time.sleep(0.5)
+    raise RuntimeError('后台仍在准备，请稍后重新打开启动入口；日志：' + str(stderr_path))
+
+
+def record_lifecycle(workspace, event, **fields):
+    """Keep the last observed lifecycle even when a console vanishes abruptly."""
+    logs = workspace / 'logs'
+    logs.mkdir(parents=True, exist_ok=True)
+    record = dict(at=time.strftime('%Y-%m-%d %H:%M:%S'), pid=os.getpid(), event=event, **fields)
+    with (logs / 'lifecycle.jsonl').open('a', encoding='utf-8') as handle:
+        handle.write(json.dumps(record, ensure_ascii=False) + '\n')
+
+
 def main():
     parser = argparse.ArgumentParser(description='ResearchForge 解压即用版')
     parser.add_argument('--check', action='store_true', help='仅检查随包运行环境')
     parser.add_argument('--no-browser', action='store_true')
+    parser.add_argument('--background', action='store_true', help='在后台启动，关闭启动窗口不会停止服务')
     parser.add_argument('--workspace', help='独立数据目录，用于迁移或测试')
     parser.add_argument('--port', type=int)
     args = parser.parse_args()
@@ -148,6 +197,8 @@ def main():
     workspace.mkdir(parents=True, exist_ok=True)
     state_file = workspace / 'portable-state.json'
     instance_id = hashlib.sha256(str(workspace).encode()).hexdigest()
+    if args.background:
+        return start_background(workspace, instance_id, args)
     with instance_lock(workspace) as acquired:
         if not acquired:
             for _ in range(30):
@@ -178,6 +229,10 @@ def main():
                 signal.signal(getattr(signal, name), stop_signal)
         child = None
         close_job = None
+        stop_reason = 'server_returned'
+        record_lifecycle(workspace, 'starting', port=cfg['port'])
+        crash_log = (workspace / 'logs' / f'fault-{os.getpid()}.log').open('ab')
+        faulthandler.enable(file=crash_log)
         try:
             with (workspace / 'ollama.log').open('ab') as engine_log:
                 options = {'creationflags': subprocess.CREATE_NO_WINDOW} if os.name == 'nt' else {'start_new_session': True}
@@ -195,7 +250,12 @@ def main():
                 raise RuntimeError('内置检索服务启动超时，请查看 user_data/ollama.log。')
             sys.path.insert(0, str(ROOT / 'platform/研究流水线Web'))
             import server
-            server.app.add_url_rule('/api/portable/health', 'portable_health', lambda: {'instance': instance_id, 'edition': 'portable'})
+            import chatgpt_config
+            runtime = dict(windows_proxy_fallback=True,
+                           response_read_timeout_seconds=chatgpt_config.RESPONSE_READ_TIMEOUT_SECONDS)
+            server.app.add_url_rule('/api/portable/health', 'portable_health',
+                                   lambda: {'instance': instance_id, 'edition': 'portable', 'pid': os.getpid(),
+                                            'runtime': runtime})
             url = f"http://127.0.0.1:{cfg['port']}"
             state_file.write_text(json.dumps({'port': cfg['port'], 'pid': os.getpid(), 'engine_pid': child.pid}))
             def open_when_ready():
@@ -208,10 +268,18 @@ def main():
             threading.Thread(target=open_when_ready, daemon=True).start()
             print('工作台地址：' + url, flush=True)
             print('请保持启动窗口打开，按 Ctrl+C 停止。', flush=True)
+            record_lifecycle(workspace, 'serving', port=cfg['port'], engine_pid=child.pid, runtime=runtime)
             server.main(['--no-browser'])
         except KeyboardInterrupt:
+            stop_reason = 'interrupted'
             print('\n正在关闭工作台和内置检索服务。', flush=True)
+        except BaseException as exc:
+            stop_reason = type(exc).__name__
+            raise
         finally:
+            record_lifecycle(workspace, 'stopping', reason=stop_reason)
+            faulthandler.disable()
+            crash_log.close()
             state_file.unlink(missing_ok=True)
             if child and child.poll() is None:
                 child.terminate()
@@ -229,4 +297,5 @@ if __name__ == '__main__':
         main()
     except Exception as exc:
         print('启动失败：' + str(exc), file=sys.stderr)
+        traceback.print_exc()
         sys.exit(1)

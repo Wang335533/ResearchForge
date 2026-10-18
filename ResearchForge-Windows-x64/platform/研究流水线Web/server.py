@@ -24,7 +24,7 @@ import hmac
 from datetime import datetime, timedelta
 
 import requests
-from flask import Flask, request, jsonify, send_from_directory, send_file, session
+from flask import Flask, request, jsonify, send_from_directory, send_file, session, redirect
 
 try:
     sys.stdout.reconfigure(encoding='utf-8', errors='replace')
@@ -39,8 +39,9 @@ sys.path.insert(0, SEARCH_TOOL_DIR)
 import retrieval_service as retrieval  # noqa: E402
 import prompts             # noqa: E402
 import llm_config          # noqa: E402
+import academic_taste      # noqa: E402
 from cloud_transport import post_completion  # noqa: E402
-from research_tasks import GENERATION_BATCH_SIZE, ResearchTasks, TaskError, load_concurrency  # noqa: E402
+from research_tasks import GENERATION_BATCH_SIZE, ResearchTasks, TaskError, load_concurrency, TASK_MODELS  # noqa: E402
 from citations import paper_lookup, short_source_lookup, resolve_proposal_references, is_insufficient_evidence  # noqa: E402
 from admin_auth import session_secret  # noqa: E402
 from original_report_exports import OriginalReportExports  # noqa: E402
@@ -139,9 +140,21 @@ def optimization_context(model, system, user, max_tokens):
 
 
 def call_llm(provider: str, api_key: str, model: str, system: str, user: str,
-             temperature: float | None, max_tokens: int, protect_context=False, thinking=None) -> str:
+             temperature: float | None, max_tokens: int, protect_context=False, thinking=None, reasoning_effort=None) -> str:
     if not 0 < max_tokens <= max(MAX_OUTPUT_TOKENS, GENERATION_OUTPUT_TOKENS):
         raise ValueError(f'输出额度必须在 1–{max(MAX_OUTPUT_TOKENS, GENERATION_OUTPUT_TOKENS)} tokens 之间')
+    if provider == 'chatgpt_plan':
+        import chatgpt_oauth
+        try:
+            content, usage = chatgpt_oauth.complete(system, user, model=model, reasoning_effort=reasoning_effort, max_tokens=max_tokens)
+            check_completion('stop', max_tokens, usage)
+            return content
+        except chatgpt_oauth.OAuthError as exc:
+            if exc.output:
+                incomplete = IncompleteOutputError(str(exc))
+                incomplete.output, incomplete.finish_reason = exc.output, exc.code
+                raise incomplete from exc
+            raise
     if provider in llm_config.PROVIDERS:
         # Read endpoint and credential together, so a settings edit cannot pair
         # a new destination with an old key in concurrently running stages.
@@ -224,11 +237,13 @@ def extract_json(text: str):
 
 
 def call_llm_json(provider, api_key, model, system, user, temperature, max_tokens, protect_context=False, thinking=None,
-                  validator=None, diagnostic_context=None):
+                  validator=None, diagnostic_context=None, reasoning_effort=None):
     """Complete-document recovery, validation, and at most one missing-prose patch."""
     extra = {'protect_context': True} if protect_context else {}
     if thinking is not None:
         extra['thinking'] = thinking
+    if reasoning_effort is not None:
+        extra['reasoning_effort'] = reasoning_effort
     try:
         text = call_llm(provider, api_key, model, system+'\n\n'+JSON_INSTRUCTION, user, temperature, max_tokens, **extra)
     except IncompleteOutputError as exc:
@@ -478,8 +493,12 @@ def validate_optimization(output, papers):
 
 
 def _llm_conf(stage: str) -> dict:
-    # Browser payloads cannot override the stage's model, credential or temperature.
-    return llm_config.stage_config(stage)
+    # Durable jobs keep the saved model/effort; a later UI edit affects new jobs.
+    current = llm_config.stage_config(stage)
+    snapshot = (TASK_MODELS.get() or {}).get(stage)
+    if snapshot:
+        current.update({k: snapshot[k] for k in ('provider', 'model', 'temperature', 'thinking', 'reasoning_effort') if k in snapshot})
+    return current
 
 
 def stage_request(error_code='invalid_request'):
@@ -515,8 +534,13 @@ def prompt_error(error):
 @app.before_request
 def share_local_only():
     from urllib.parse import urlsplit
-    if urlsplit('http://' + request.host).hostname not in ('127.0.0.1', 'localhost', '::1'):
+    host = urlsplit('http://' + request.host).hostname
+    if host not in ('127.0.0.1', 'localhost', '::1'):
         return jsonify(error='仅允许本机访问'), 403
+    if host == 'localhost' and request.headers.get('Sec-Fetch-Mode') == 'navigate':
+        # On Windows "localhost" tries IPv6 first and stalls about a second per connection,
+        # because the service listens on IPv4 only. Move browser page loads to 127.0.0.1.
+        return redirect(request.url.replace('://localhost', '://127.0.0.1', 1), 302)
     origin = request.headers.get('Origin')
     if request.method not in ('GET','HEAD','OPTIONS') and origin and origin != request.host_url.rstrip('/'):
         return jsonify(error='不允许跨站修改'), 403
@@ -534,16 +558,22 @@ def share_architecture():
     return send_from_directory(os.path.join(BASE_DIR, '..', '..'), '架构说明.html')
 
 SHARED_UI_DIR = os.path.normpath(os.path.join(BASE_DIR, '..', 'shared_ui'))
-SHARED_UI_TYPES = {'.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.svg': 'image/svg+xml'}
+SHARED_UI_TYPES = {'.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.svg': 'image/svg+xml',
+                   '.woff2': 'font/woff2', '.webp': 'image/webp', '.png': 'image/png', '.json': 'application/json; charset=utf-8'}
 
 @app.get('/ui/<path:name>')
 def shared_ui(name):
-    # Workspace chrome shared with the mounted reading module.
+    # Workspace chrome shared with the mounted reading module: styles, scripts, icons,
+    # the interface font subset and the illustration masks.
     mimetype = SHARED_UI_TYPES.get(os.path.splitext(name)[1].lower())
     if not mimetype:
         return jsonify(error='未找到界面资源'), 404
     response = send_from_directory(SHARED_UI_DIR, name, mimetype=mimetype)
-    response.headers['Cache-Control'] = 'no-cache'  # revalidate so an updated package shows at once
+    # Fonts and images come from the cache at once (re-checked in the background), so switching pages never
+    # flashes fallback text or pops in artwork; styles and scripts are re-checked so updates show at once.
+    suffix = os.path.splitext(name)[1].lower()
+    response.headers['Cache-Control'] = ('public, max-age=604800, stale-while-revalidate=2592000' if suffix in ('.woff2', '.webp', '.png')
+                                         else 'public, max-age=0, stale-while-revalidate=604800' if suffix == '.svg' else 'no-cache')
     return response
 
 @app.get('/')
@@ -569,6 +599,21 @@ def health():
                     'stage_models': llm_config.public_stage_config(),
                     'ollama_ok': ollama_ok, 'ollama_models': ollama_models,
                     'ollama_err': ollama_err})
+
+
+@app.get('/api/workspace/overview')
+def workspace_overview():
+    """Read-only counts across all modules for the landing views; no model or Ollama calls."""
+    counts = get_tasks().store.status_counts()
+    state = get_engine().status()
+    result = {'research': {'total': sum(counts.values()), 'completed': counts.get('completed', 0),
+                           'active': sum(counts.get(s, 0) for s in ('queued', 'running', 'stopping'))},
+              'retrieval': {'ready': bool(state.get('ready')), 'papers': state.get('papers') or 0,
+                            'phase': state.get('phase'), 'error': bool(state.get('error'))}}
+    reader = app.extensions.get('paper_reader')
+    if reader is not None:
+        result.update(reader.workspace_overview())
+    return jsonify(result)
 
 
 @app.get('/api/models/config')
@@ -684,7 +729,7 @@ def generate_response(d):
     try:
         ideas = call_llm_json(conf['provider'], conf['api_key'], conf['model'],
                               system, user, temperature=conf['temperature'], max_tokens=GENERATION_OUTPUT_TOKENS,
-                              thinking=conf.get('thinking'),
+                              thinking=conf.get('thinking'), reasoning_effort=conf.get('reasoning_effort'),
                               validator=lambda output: validate_ideas(output, n),
                               diagnostic_context={'stage':1,'count':n})
         return jsonify(ideas)
@@ -697,6 +742,17 @@ def generate_response(d):
 @app.post('/api/judge')
 def api_judge():
     return judge_response(stage_request('invalid_judge_input'))
+
+
+@app.get('/api/academic-taste/status')
+def api_academic_taste_status():
+    try:
+        value = academic_taste.config()
+        return jsonify({'schema_version': 1, 'enabled': bool(value.get('enabled', False)),
+                        'mode': value.get('mode', 'shadow'), 'automatic_veto': False})
+    except Exception:
+        return jsonify({'schema_version': 1, 'enabled': False, 'mode': 'shadow',
+                        'automatic_veto': False, 'error': 'configuration_unavailable'})
 
 
 def judge_response(d):
@@ -712,13 +768,17 @@ def judge_response(d):
         return jsonify({'top5': []})
     conf = _llm_conf('judge')
     system, user = prompts.build_stage2(ideas, expected_count)
+    taste_result = academic_taste.assess(ideas)
+    user += academic_taste.advisory_text(taste_result)
     try:
         data = call_llm_json(conf['provider'], conf['api_key'], conf['model'],
                              system, user, temperature=conf['temperature'], max_tokens=MAX_OUTPUT_TOKENS,
-                             thinking=conf.get('thinking'),
+                             thinking=conf.get('thinking'), reasoning_effort=conf.get('reasoning_effort'),
                              validator=lambda output: validate_judgements(output, ideas, expected_count),
                              diagnostic_context={'stage': 2, 'input_ids': [idea['id'] for idea in ideas],
                                                  'selection_count': expected_count})
+        if taste_result is not None:
+            data['academic_taste'] = taste_result
         return jsonify(data)
     except IncompleteOutputError as e:
         return jsonify({'error': str(e), 'code': 'incomplete_output'}), 502
@@ -780,7 +840,7 @@ def optimize_response(d):
     try:
         result = call_llm_json(conf['provider'], conf['api_key'], conf['model'],
                                  system, user, temperature=conf['temperature'], max_tokens=MAX_OUTPUT_TOKENS, protect_context=True,
-                                 thinking=conf.get('thinking'),
+                                 thinking=conf.get('thinking'), reasoning_effort=conf.get('reasoning_effort'),
                                  validator=lambda output: validate_optimization(output, papers),
                                  diagnostic_context={'stage': 4, 'idea_id': idea.get('id'),
                                                      'paper_source_ids': list(paper_lookup(papers)),
@@ -874,7 +934,10 @@ def task_error(error):
 @app.get('/api/tasks')
 def list_tasks():
     manager = get_tasks()
-    return jsonify({'tasks': manager.store.summaries(),
+    query = (request.args.get('q') or '').strip()[:200]
+    archived = request.args.get('archived') == '1'
+    return jsonify({'tasks': manager.store.summaries(query, archived, 200 if query or archived else 50),
+                    'archived_count': manager.store.archived_count(),
                     'concurrency': manager.concurrency_status(),
                     'worker_error': manager.worker_error,
                     'idea_csv': manager.store.idea_csv.snapshot})
@@ -885,7 +948,20 @@ def create_task():
     d = request.get_json(silent=True)
     if not isinstance(d, dict):
         raise TaskError('请提交有效的任务 JSON')
-    task, created = get_tasks().create(d.get('request_id'), d.get('topic'), d.get('count', 20), d.get('selection_count', 5))
+    import chatgpt_models
+    models = llm_config.public_stage_config()
+    if d.get('count', 20) != 0 and any(m.get('provider') == 'chatgpt_plan' for m in models.values()):
+        defaults = chatgpt_models.catalog()['defaults']
+        try:
+            choice = chatgpt_models.validate_selection(d.get('model', defaults['model']),
+                        d.get('reasoning_effort', defaults['reasoning_effort']))
+        except ValueError as exc:
+            raise TaskError(str(exc)) from exc
+        for model in models.values():
+            if model.get('provider') == 'chatgpt_plan':
+                model.update(choice)
+    task, created = get_tasks().create(d.get('request_id'), d.get('topic'), d.get('count', 20), d.get('selection_count', 5), models=models,
+                                     prompt_snapshot=prompts.load_all() if d.get('count', 20) != 0 else None)
     response = jsonify({'task': task, 'created': created})
     response.status_code = 202 if created else 200
     response.headers['Location'] = '/api/tasks/' + task['id']
@@ -910,6 +986,14 @@ def resume_task(task_id):
     return jsonify({'task': get_tasks().resume(task_id)}), 202
 
 
+@app.post('/api/tasks/<task_id>/archive')
+def archive_task(task_id):
+    d = request.get_json(silent=True)
+    if not isinstance(d, dict) or type(d.get('archived', True)) is not bool:
+        raise TaskError('请提交 {"archived": true|false}', 'invalid_request', 400)
+    return jsonify({'task': get_tasks().store.archive(task_id, d.get('archived', True))})
+
+
 @app.after_request
 def no_task_cache(response):
     if request.path.startswith(('/api/tasks', '/api/admin', '/api/prompts')):
@@ -930,8 +1014,8 @@ def main(argv=None):
     print('=' * 58)
     print(' ResearchForge · 自动化研究构思流水线')
     print(f' Python {sys.version.split()[0]}  |  语料: {retrieval.SOURCE}')
-    print(f' http://localhost:{PORT}/setup')
-    print(' 提示词管理员：admin / ' + ADMIN_PASS)
+    print(f' http://127.0.0.1:{PORT}/setup')
+    print(' 提示词管理员：admin；密码请在数据目录的 admin-password.txt 查看。')
     print('=' * 58)
     if os.environ.get('RF_AUTO_PREPARE') == '1':
         get_engine().start()

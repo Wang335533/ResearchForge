@@ -4,6 +4,8 @@ const TASK_ACTIVE = new Set(['queued','running','stopping']);
 const TASK_PAUSED = new Set(['stopped','failed','interrupted']);
 Object.assign(S, {taskId:null, task:null, revision:0, submitting:false, recovering:true});
 let taskTimer = null, taskListTimer = null, taskPollSerial = 0, taskNavigation = 0;
+let researchPicker;
+researchPicker = new RFModelPicker($('research-model-picker'), 'rf-research-model', () => {if(researchPicker)syncRunButton();});
 
 function taskStorage(key, value) {
   try {
@@ -22,20 +24,22 @@ function syncRunButton() {
   const locked = S.recovering || S.submitting || S.running;
   const target = selectionTarget();
   const invalid = ['cnt-val','select-val'].some(id => $(id).value === '' || !$(id).checkValidity());
-  $('btn-run').disabled = locked || invalid || (S.count > 0 && !S.currentModels.gen) || (target > 0 && (!S.retrieval?.ready || !['judge','opt'].every(stage => S.currentModels[stage])));
-  $('btn-run').innerHTML = `<span>${S.submitting ? '正在提交…' : S.count === 0 ? '保存空任务' : '开始研究'}</span>${icon('arrow')}`;
-  $('count-hint').textContent = S.count === 0 ? '不生成构想，不调用模型。' : target === 0 ? `只生成 ${S.count} 个构想，不做筛选与检索。` : `生成 ${S.count} 个构想，筛选 ${target} 个做文献判断，通过者形成提案。`;
+  $('btn-run').disabled = locked || invalid || (S.count > 0 && (!S.apiReady || !researchPicker?.valid)) || (S.count > 0 && !S.currentModels.gen) || (target > 0 && (!S.retrieval?.ready || !['judge','opt'].every(stage => S.currentModels[stage])));
+  putHTML('btn-run', `<span>${S.submitting ? '正在提交…' : S.count === 0 ? '保存空任务' : '开始研究'}</span>${icon('arrow')}`);
+  put('count-hint', S.count === 0 ? '空任务：只保存主题，不调用模型' : target === 0 ? '只生成构想，不评审、不查文献' : `评审后选出前 ${target} 个，查文献并写成提案`);
   if (S.health && S.retrieval) {
     const blocked = target > 0 && !S.retrieval.ready;
-    $('run-hint').textContent = !blocked ? (S.concurrency ? `最多 ${S.concurrency.max_parallel_tasks} 项并行 · 进度自动保存` : '进度自动保存') : retrievalHint();
-    $('run-hint').className = blocked && S.retrieval.error ? 'error' : '';
+    put('run-hint', blocked ? retrievalHint() : '');
+    putClass('run-hint', blocked ? (S.retrieval.error ? 'error' : 'warn') : '');
   }
   renderReadiness();
   $('btn-stop').classList.toggle('hide', !S.running);
   $('btn-stop').disabled = S.submitting || S.task?.status === 'stopping';
-  $('btn-stop').textContent = S.task?.status === 'stopping' ? '正在停止…' : '停止';
-  $('btn-stop').title = '停止当前研究的新请求，已发出的调用返回后保存结果；其他研究继续运行';
+  put('btn-stop', S.task?.status === 'stopping' ? '正在停止…' : '停止');
   $('btn-resume').classList.toggle('hide', !TASK_PAUSED.has(S.task?.status));
+  $('btn-archive').classList.toggle('hide', !S.task || S.running || S.recovering);
+  $('btn-archive').disabled = S.submitting;
+  $('btn-archive').querySelector('span').textContent = S.task?.archived ? '恢复到历史' : '移出历史';
   $('btn-resume').disabled = S.submitting || S.running || S.recovering;
   $('btn-new').disabled = S.submitting;
   $('topic').disabled = locked;
@@ -77,8 +81,9 @@ function renderTaskContext() {
   const task = S.task;
   if (!task) return;
   const listed = S.tasks.find(item => item.id === task.id) || task;
-  $('task-date').textContent = `第 ${taskRunNumber(listed)} 次 · 运行标记 ${taskRunMark(task)} · ` + new Date(task.created_at * 1000).toLocaleString('zh-CN',{year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'});
-  $('task-date').title = '完整任务编号：' + task.id;
+  const run = taskRunNumber(listed);
+  $('task-date').textContent = new Date(task.created_at * 1000).toLocaleString('zh-CN',{month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'}) + (run > 1 ? ` · 同一主题第 ${run} 次` : '') + (task.archived ? ' · 已移出历史' : '');
+  $('task-date').title = `运行标记 ${taskRunMark(task)}\n完整任务编号：${task.id}`;
   const logTitle = $('log-dialog').querySelector('h2');
   logTitle.textContent = '运行记录 · ' + taskRunMark(task);
   logTitle.title = '完整任务编号：' + task.id;
@@ -88,10 +93,18 @@ function renderTaskContext() {
     $('task-status').textContent = `排队中${ahead ? `，前面还有 ${ahead} 项` : ''}`;
   }
 }
+function historySource(query) {
+  const local = (S.showArchived ? S.archivedTasks : S.tasks) || [];
+  const matched = local.filter(task => [task.topic, task.id, taskRunMark(task)].some(value => String(value).toLocaleLowerCase().includes(query)));
+  if (!query || !S.historySearch || S.historySearch.query !== query || S.historySearch.archived !== !!S.showArchived) return matched;
+  // Server results reach past the 50 most recent tasks; keep any local matches too.
+  const seen = new Set(matched.map(task => task.id));
+  return matched.concat(S.historySearch.tasks.filter(task => !seen.has(task.id)));
+}
 function renderHistory() {
   const query = $('history-search').value.trim().toLocaleLowerCase();
-  const tasks = S.tasks.filter(task => [task.topic, task.id, taskRunMark(task)].some(value => String(value).toLocaleLowerCase().includes(query)));
-  const root = $('task-list'), signature = JSON.stringify([S.taskId, query, tasks]);
+  const tasks = historySource(query);
+  const root = $('task-list'), signature = JSON.stringify([S.taskId, query, S.showArchived, tasks]);
   if (root.dataset.signature === signature) return;
   root.dataset.signature = signature;
   const scroll = root.scrollTop;
@@ -105,11 +118,13 @@ function renderHistory() {
     button.dataset.taskId = task.id; button.disabled = S.submitting;
     if (task.id === S.taskId) button.setAttribute('aria-current', 'page');
     button.title = `${task.topic}\n运行标记：${taskRunMark(task)}\n完整任务编号：${task.id}`;
-    button.innerHTML = `<strong>${esc(compactTopic(task.topic))}</strong><small><span class="status-dot ${esc(task.status)}"></span>${esc(TASK_LABELS[task.status] || task.status)} · 第 ${taskRunNumber(task)} 次<time datetime="${date.toISOString()}">${date.toLocaleDateString('zh-CN',{month:'numeric',day:'numeric'})}</time></small>`;
+    const run = taskRunNumber(task);
+    button.innerHTML = `<strong>${esc(compactTopic(task.topic))}</strong><small><span class="status-dot ${esc(task.status)}"></span>${esc(TASK_LABELS[task.status] || task.status)}${run > 1 ? ` · 第 ${run} 次` : ''}<time datetime="${date.toISOString()}">${date.toLocaleDateString('zh-CN',{month:'numeric',day:'numeric'})}</time></small>`;
     button.onclick = () => { selectTask(task.id); setSidebar(false); };
     root.appendChild(button);
   }
-  if (!tasks.length) root.innerHTML = `<p class="sidebar-empty">${query ? '没有找到相关研究' : '还没有研究任务'}</p>`;
+  if (!tasks.length) root.innerHTML = `<p class="sidebar-empty">${query ? '没有找到相关研究' : S.showArchived ? '没有移出的研究' : '还没有研究，从右侧输入主题开始'}</p>`;
+  renderRecent();
   root.scrollTop = scroll;
   if (focused) [...root.querySelectorAll('.task-item')].find(button => button.dataset.taskId === focused)?.focus({preventScroll:true});
 }
@@ -138,7 +153,8 @@ function renderTask(task) {
   }
   $('task-badge').className = 'status ' + task.status; $('task-badge').textContent = TASK_LABELS[task.status] || task.status;
   const dropped = Object.values(S.literatureChecks).filter(c => c.decision === 'drop').length;
-  $('task-summary').textContent = `${S.ideas.length} 个构想 · ${S.proposals.length} 份提案${dropped ? ' · '+dropped+' 个方向未进入提案' : ''}`;
+  $('task-summary').textContent = `${S.ideas.length} 个构想 · ${S.proposals.length} 份提案${dropped ? ' · '+dropped+' 个未通过文献判断' : ''}`;
+  paintElapsed();
   setConnection(S.workerError ? '执行器异常' : '已保存', !!S.workerError, S.workerError || '研究进度已保存，关闭页面后仍可继续查看');
   renderResearchContents();
   const total = S.top5.length, target = selectionTarget(), targets = [S.count,target,target,target];
@@ -175,7 +191,7 @@ function renderTask(task) {
 function renderIdeaCSV(csv) {
   if (!csv) return;
   $('idea-csv-status').textContent = csv.error || (csv.updated_at ? `idea.csv · 已保存 ${csv.rows} 个构想 · ${new Date(csv.updated_at*1000).toLocaleTimeString()}` : '新构想将自动保存到 idea.csv');
-  $('idea-csv-status').style.color = csv.error ? 'var(--red)' : '';
+  $('idea-csv-status').style.color = csv.error ? 'var(--rf-danger)' : '';
   $('idea-csv-status').title = csv.path || '';
 }
 async function refreshTasks() {
@@ -188,8 +204,11 @@ async function refreshTasks() {
   S.concurrency = data.concurrency || null;
   const concurrency = $('concurrency-status');
   if (concurrency) concurrency.textContent = S.concurrency ?
-    `上限 ${S.concurrency.max_parallel_tasks} 项研究 · ${S.concurrency.max_api_calls} 个并发请求（单项 ${S.concurrency.max_task_calls} 个）。当前 ${S.concurrency.running_tasks} 项运行，${S.concurrency.queued_tasks} 项排队。` : '尚未载入并行配置';
-  $('worker-error').textContent = S.workerError ? '后台执行器异常：' + S.workerError + '。重启后端后可继续已保存的研究。' : '';
+    `最多同时 ${S.concurrency.max_parallel_tasks} 项研究、${S.concurrency.max_api_calls} 个请求；现在 ${S.concurrency.running_tasks} 项运行，${S.concurrency.queued_tasks} 项排队` : '正在读取';
+  S.archivedCount = data.archived_count || 0;
+  $('history-archived').hidden = !S.archivedCount && !S.showArchived;
+  $('archived-count').textContent = S.archivedCount;
+  $('worker-error').textContent = S.workerError ? '后台执行出错：' + S.workerError + '。重启工作台后可以继续已保存的研究。' : '';
   if (S.workerError) setConnection('执行器异常', true, S.workerError);
   renderHistory(); renderTaskContext(); renderIdeaCSV(data.idea_csv); return S.tasks;
 }
@@ -241,7 +260,7 @@ function newResearch() {
   taskStorage('rf_active_task', null);
   const url = new URL(location.href); url.searchParams.delete('task'); url.searchParams.set('new','1'); history.replaceState(null, '', url);
   resetAll(); showResearch(false); setSidebar(false); setConnection('');
-  const draft = draftResearch(); $('topic').value = draft.topic; restoreCounts(draft);
+  const draft = draftResearch(); $('topic').value = draft.topic; restoreCounts(draft); fitTopic(); clearInterval(elapsedTimer);
   renderModelConfig(); renderHistory(); syncRunButton();
   window.scrollTo({top:0,behavior:'instant'}); $('topic').focus();
 }
@@ -251,7 +270,8 @@ async function runPipeline() {
   if (!topic) { toast('请填写研究主题', 'err'); $('topic').focus(); return; }
   if (topic.length > 4000) { toast('研究主题最多 4000 字符', 'err'); return; }
   const pending = pendingTask();
-  const body = pending && pending.topic === topic && pending.count === count && (pending.selection_count ?? 5) === selection_count ? pending : {request_id:crypto.randomUUID(),topic,count,selection_count};
+  const choice = researchPicker.valid ? researchPicker.value() : {};
+  const body = pending && pending.topic === topic && pending.count === count && (pending.selection_count ?? 5) === selection_count && pending.model === choice.model && pending.reasoning_effort === choice.reasoning_effort ? pending : {request_id:crypto.randomUUID(),topic,count,selection_count,...choice};
   taskStorage('rf_pending_task', JSON.stringify(body)); saveView(true);
   clearTimeout(taskTimer); rememberTask(body.request_id); S.task = null; S.revision = 0; resetAll();
   S.submitting = true; syncRunButton(); setConnection('正在保存');
@@ -279,8 +299,94 @@ $('btn-run').onclick = runPipeline;
 $('btn-stop').onclick = () => controlTask('stop');
 $('btn-resume').onclick = resumeTask;
 $('btn-new').onclick = newResearch;
-document.querySelector('.brand').onclick = event => { event.preventDefault(); newResearch(); };
-$('history-search').oninput = renderHistory;
+for (const link of document.querySelectorAll('.brand, .workspace-modules a[aria-current="page"]')) {
+  link.onclick = event => {
+    if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+    event.preventDefault(); newResearch();
+  };
+}
+let historySearchTimer = 0;
+$('history-search').oninput = () => {
+  renderHistory();
+  clearTimeout(historySearchTimer);
+  const query = $('history-search').value.trim().toLocaleLowerCase(), archived = !!S.showArchived;
+  if (!query) return;
+  historySearchTimer = setTimeout(async () => {
+    try {
+      const data = await taskRequest(`/api/tasks?${new URLSearchParams({q: query, ...(archived ? {archived: '1'} : {})})}`);
+      S.historySearch = {query, archived, tasks: data.tasks};
+      if ($('history-search').value.trim().toLocaleLowerCase() === query) renderHistory();
+    } catch { /* Local matches stay visible. */ }
+  }, 260);
+};
+function setArchivedView(on) {
+  S.showArchived = on;
+  $('history-archived').setAttribute('aria-pressed', String(on));
+  $('history-label').textContent = on ? '已移出的研究' : '研究历史';
+}
+async function loadArchived() {
+  const data = await taskRequest('/api/tasks?archived=1');
+  S.archivedTasks = data.tasks; S.archivedCount = data.archived_count;
+  $('archived-count').textContent = S.archivedCount;
+  // Once the last removed research is restored, return to the history instead of an empty view.
+  if (!S.archivedCount) { setArchivedView(false); $('history-archived').hidden = true; }
+}
+$('history-archived').onclick = async () => {
+  setArchivedView(!S.showArchived);
+  if (S.showArchived) { try { await loadArchived(); } catch { toast('暂时无法读取', 'err'); } }
+  $('history-archived').hidden = !S.archivedCount && !S.showArchived;
+  renderHistory();
+};
+async function archiveTask(archived) {
+  if (!S.taskId || S.running) return;
+  const id = S.taskId, topic = compactTopic(S.task?.topic);
+  try {
+    await taskRequest(`/api/tasks/${encodeURIComponent(id)}/archive`, {archived});
+    await refreshTasks();
+    if (S.showArchived) { await loadArchived(); renderHistory(); }
+    if (archived) {
+      newResearch();
+      toast(`已移出「${topic}」`, '', {label: '撤销', run: async () => {
+        try { await taskRequest(`/api/tasks/${encodeURIComponent(id)}/archive`, {archived: false}); await refreshTasks(); selectTask(id); }
+        catch (error) { toast(error.message, 'err'); }
+      }});
+    } else {
+      S.revision = 0; await pollTask(); toast('已恢复到研究历史');
+    }
+  } catch (error) { toast(error.message, 'err'); }
+}
+$('btn-archive').onclick = () => archiveTask(!S.task?.archived);
+/* Returning users get their latest research one click away on the home view. */
+function renderRecent() {
+  const root = $('recent-list');
+  if (!root) return;
+  const tasks = (S.tasks || []).slice(0, 3);
+  $('recent-research').hidden = !tasks.length;
+  $('workflow-intro').hidden = tasks.length > 0;
+  const signature = JSON.stringify(tasks.map(task => [task.id, task.status, task.revision]));
+  if (root.dataset.signature === signature) return;
+  root.dataset.signature = signature;
+  root.replaceChildren(...tasks.map(task => {
+    const button = document.createElement('button'); button.type = 'button'; button.className = 'recent-item'; button.dataset.taskId = task.id;
+    const when = new Date(task.created_at * 1000).toLocaleString('zh-CN', {month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit'});
+    button.innerHTML = `<span class="status-dot ${esc(task.status)}"></span><strong>${esc(compactTopic(task.topic))}</strong><small>${esc(TASK_LABELS[task.status] || task.status)} · ${esc(when)}</small><span class="recent-go">${icon('arrow-right')}</span>`;
+    button.onclick = () => selectTask(task.id);
+    return button;
+  }));
+}
+/* Running research shows how long it has been going. */
+let elapsedTimer = 0;
+function paintElapsed() {
+  clearInterval(elapsedTimer);
+  const el = $('task-elapsed'), task = S.task;
+  if (!task || !TASK_ACTIVE.has(task.status)) { el.hidden = true; return; }
+  const draw = () => {
+    const seconds = Math.max(0, Math.round(Date.now() / 1000 - task.created_at));
+    const minutes = Math.floor(seconds / 60);
+    el.textContent = minutes >= 60 ? `已运行 ${Math.floor(minutes / 60)} 小时 ${minutes % 60} 分` : minutes ? `已运行 ${minutes} 分 ${seconds % 60} 秒` : `已运行 ${seconds} 秒`;
+  };
+  el.hidden = false; draw(); elapsedTimer = setInterval(draw, 1000);
+}
 $('task-topic').addEventListener('toggle', () => {
   if (!S.task) return;
   viewState().expanded['research-topic'] = $('task-topic').open; saveView();
@@ -299,19 +405,20 @@ async function discoverTasks() {
 }
 (async function initTasks() {
   const initialNavigation = taskNavigation;
-  pollPreparation(); refreshHealth().catch(error => clog('等待服务连接：' + error.message));
+  pollPreparation(); if (typeof refreshApiReadiness === 'function') refreshApiReadiness(); refreshHealth().catch(error => clog('等待服务连接：' + error.message));
   const url = new URL(location.href);
-  S.drafting = url.searchParams.get('new') === '1';
-  let selected = S.drafting ? null : url.searchParams.get('task') || taskStorage('rf_active_task');
+  // Only an explicit task URL restores a result. Entering this module is home,
+  // even when another task is still running or saved in browser storage.
+  const selected = url.searchParams.get('new') === '1' ? null : url.searchParams.get('task');
+  S.drafting = !selected;
   try {
-    const tasks = await refreshTasks();
-    if (!selected && !S.drafting && tasks.length) selected = tasks[0].id;
+    await refreshTasks();
   } catch { setConnection('正在重新连接', true); }
   if (initialNavigation !== taskNavigation) { S.booted = true; taskListTimer = setTimeout(discoverTasks, 10000); return; }
   if (selected) await selectTask(selected);
   else {
     const saved = (!S.drafting && pendingTask()) || draftResearch();
-    $('topic').value = saved.topic; restoreCounts(saved);
+    $('topic').value = saved.topic; restoreCounts(saved); if (typeof fitTopic === 'function') fitTopic();
     S.recovering = false; syncRunButton();
   }
   S.booted = true;

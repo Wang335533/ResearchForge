@@ -72,7 +72,7 @@ async function pmLoad() {
     renderEditor();
   } catch (error) {
     $('pm-foot').classList.add('hide');
-    $('pm-body').innerHTML = '<p class="error-text" id="pm-load-error"></p><button class="btn btn-ghost" id="pm-retry">重新读取</button>';
+    $('pm-body').innerHTML = '<p class="error-text" id="pm-load-error"></p><button class="btn btn-secondary" id="pm-retry">重新读取</button>';
     $('pm-load-error').textContent = error.message; $('pm-retry').onclick = pmProbe;
   }
 }
@@ -111,7 +111,7 @@ async function pmSave() {
     await pmRequest('/api/prompts',{key,content});
     const prompt = PM.prompts.find(item => item.key === key); if (prompt) prompt.content = content;
     if (PM.drafts[key] === content) delete PM.drafts[key];
-    pmMsg(pmDirty() ? '有未保存的修改' : '已保存',pmDirty() ? '' : 'ok');
+    pmMsg(pmDirty() ? '有未保存的修改' : '已保存，新建研究生效；已有任务沿用创建时的提示词',pmDirty() ? '' : 'ok');
   } catch (error) {
     if (error.status === 401) renderLogin('登录已过期，重新登录后可继续编辑。未保存的修改仍保留在本页。');
     else pmMsg('保存失败：' + error.message,'err');

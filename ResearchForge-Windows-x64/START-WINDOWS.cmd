@@ -7,7 +7,7 @@ if /i "%PROCESSOR_ARCHITECTURE%"=="x86" if not defined PROCESSOR_ARCHITEW6432 (
   pause
   exit /b 1
 )
-"%~dp0runtime\python\python.exe" -I -B -X utf8 "%~dp0portable.py" %*
+"%~dp0runtime\python\python.exe" -I -B -X utf8 "%~dp0portable.py" --background %*
 set "rf_exit=%errorlevel%"
 if not "%rf_exit%"=="0" (
   echo.

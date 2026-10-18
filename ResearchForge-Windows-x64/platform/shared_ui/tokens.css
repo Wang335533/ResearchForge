@@ -1,192 +1,345 @@
 /*
- * ResearchForge design tokens — shared by every workspace page.
- * Neutral and accent scales follow Radix Colors "sage" and "jade" (MIT, radix-ui.com/colors),
- * tuned around the original brand green #2d6654. Pages read only these variables.
+ * ResearchForge design tokens — "砚山" (Inkstone & Mountains).
+ * A Song-dynasty palette: rice paper, pine ink, celadon, ochre and cinnabar.
+ * Pages and components read only these variables; art layers are coloured with the
+ * --rf-art-* tokens through CSS masks, so both themes share one set of illustrations.
  */
 :root {
   color-scheme: light;
 
-  /* Surfaces */
-  --rf-bg: #fbfcfb;
-  --rf-bg-subtle: #f6f8f7;
-  --rf-sidebar: #f2f5f3;
-  --rf-surface: #ffffff;
-  --rf-surface-2: #f7f9f8;
-  --rf-surface-3: #eef2f0;
-  --rf-hover: #edf1ee;
-  --rf-active: #e4ebe6;
-  --rf-overlay: rgb(17 28 23 / .38);
-  --rf-topbar: rgb(251 252 251 / .82);
+  /* Paper and desk */
+  --rf-desk: #ebe5d8;
+  --rf-bg: #faf7f1;
+  --rf-bg-subtle: #f5f1e8;
+  --rf-sidebar: transparent;
+  --rf-surface: #fffdf8;
+  --rf-surface-2: #f6f2e9;
+  --rf-surface-3: #efe9dd;
+  --rf-raised: #fffefb;
+  --rf-hover: rgb(70 60 40 / .055);
+  --rf-active: rgb(70 60 40 / .09);
+  --rf-overlay: rgb(36 32 25 / .34);
+  --rf-topbar: rgb(250 247 241 / .78);
+  --rf-glass: rgb(255 253 248 / .62);
 
   /* Lines */
-  --rf-line: #e1e6e2;
-  --rf-line-soft: #ebefec;
-  --rf-line-strong: #cbd2cd;
+  --rf-line: #e5ddcd;
+  --rf-line-soft: #eee8dc;
+  --rf-line-strong: #d4c9b4;
 
-  /* Text */
-  --rf-text: #1a211e;
-  --rf-text-2: #414a46;
-  --rf-text-3: #5c6560;
-  --rf-text-4: #858e89;
-  --rf-placeholder: #939b97;
+  /* Ink */
+  --rf-text: #2a2722;
+  --rf-text-2: #4a453d;
+  --rf-text-3: #6b6458;
+  --rf-text-4: #978f82;
+  --rf-placeholder: #a39b8d;
 
-  /* Brand accent */
-  --rf-accent: #2d6654;
-  --rf-accent-hover: #245545;
-  --rf-accent-press: #1d4739;
-  --rf-accent-text: #226b55;
-  --rf-accent-soft: #e8f5ee;
-  --rf-accent-soft-2: #d6efe2;
-  --rf-accent-line: #aedcc6;
-  --rf-accent-mid: #56ba9f;
-  --rf-on-accent: #ffffff;
-  --rf-focus: #2f8a6d;
-  --rf-selection: #cfeadb;
+  /* Pine & celadon accent (品牌色由原 #2d6654 演化为更柔和的松石绿) */
+  --rf-accent: #4a7564;
+  --rf-accent-hover: #3f6757;
+  --rf-accent-press: #355a4b;
+  --rf-accent-text: #3d6b59;
+  --rf-accent-soft: #e7efe8;
+  --rf-accent-soft-2: #d6e5da;
+  --rf-accent-line: #b6cfbf;
+  --rf-accent-mid: #7ea692;
+  --rf-on-accent: #fbf9f3;
+  --rf-focus: #5f9480;
+  --rf-selection: #d5e6da;
+
+  /* Secondary pigments */
+  --rf-ochre: #a9774a;
+  --rf-ochre-soft: #f5ebdc;
+  --rf-cinnabar: #b2513c;
+  --rf-cinnabar-soft: #f7e6df;
+  --rf-indigo: #3f5c76;
+  --rf-indigo-soft: #e7edf2;
 
   /* Status */
-  --rf-warn: #93600f;
-  --rf-warn-soft: #fcf3e3;
-  --rf-warn-line: #efd9ae;
-  --rf-danger: #b0392f;
-  --rf-danger-soft: #fdf1ef;
-  --rf-danger-line: #f1cfc9;
-  --rf-info: #2f6490;
-  --rf-info-soft: #eef4fa;
+  --rf-warn: #94661a;
+  --rf-warn-soft: #faf0dc;
+  --rf-warn-line: #ead6ad;
+  --rf-danger: #a4473a;
+  --rf-danger-soft: #faebe6;
+  --rf-danger-line: #ecc9bf;
+  --rf-info: #3f5c76;
+  --rf-info-soft: #e9eef3;
+  --rf-success: #4a7564;
 
-  /* Inverse (toasts) */
-  --rf-inverse: #1d2a24;
-  --rf-on-inverse: #f1f5f2;
+  /* Inverse (toasts, tooltips) */
+  --rf-inverse: #2b2924;
+  --rf-on-inverse: #f4efe4;
+
+  /* Illustration pigments (CSS-coloured masks) */
+  --rf-art-sky-top: #efe9de;
+  --rf-art-sky: #f6f1e8;
+  --rf-art-sun: #e9b49a;
+  --rf-art-sun-glow: rgb(236 178 148 / .35);
+  --rf-art-far: #bccbc2;
+  --rf-art-mid: #93ab9f;
+  --rf-art-near: #64806f;
+  --rf-art-ink: #3c3a34;
+  --rf-art-mist: #f7f2e9;
+  --rf-art-water: #a6b8ae;
+  --rf-art-blossom: #d98f80;
+  --rf-art-blossom-core: #b2513c;
+  --rf-art-route: #b58654;
+  --rf-art-vignette: #6f8a7d;
+
+  /* Ambient watercolour washes */
+  --rf-wash-1: #cfdfd3;
+  --rf-wash-2: #efdcc1;
+  --rf-wash-3: #d5dee6;
+  --rf-wash-strength: .55;
+  --rf-paper-grain: .05;
 
   /* Type */
-  --rf-font: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Segoe UI", "Microsoft YaHei", "Noto Sans SC", sans-serif;
-  --rf-font-serif: "Iowan Old Style", "Songti SC", Georgia, "Noto Serif SC", serif;
-  --rf-font-mono: ui-monospace, "SF Mono", "Cascadia Code", Consolas, "PingFang SC", monospace;
+  --rf-font: "PingFang SC", "Hiragino Sans GB", -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei UI", "Microsoft YaHei", "Source Han Sans SC", "Noto Sans SC", sans-serif;
+  --rf-font-serif: "RF Song", "Source Han Serif SC", "Noto Serif CJK SC", "Songti SC", "STSong", "Sitka Heading", Georgia, serif;
+  --rf-font-display: "RF Song", "Source Han Serif SC", "Noto Serif CJK SC", "Songti SC", "Sitka Banner", Georgia, serif;
+  --rf-font-mono: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Consolas, "PingFang SC", "Microsoft YaHei", monospace;
+  --rf-text-xs: 12px;
+  --rf-text-sm: 13px;
+  --rf-text-base: 14.5px;
+  --rf-text-md: 16px;
+  --rf-text-lg: 19px;
+  --rf-text-xl: 24px;
+  --rf-text-2xl: clamp(28px, 2.4vw, 34px);
+  --rf-text-hero: clamp(34px, 3.6vw, 52px);
+  --rf-leading: 1.65;
+  --rf-leading-tight: 1.28;
+
+  /* Space (4px grid) */
+  --rf-s-1: 4px;
+  --rf-s-2: 8px;
+  --rf-s-3: 12px;
+  --rf-s-4: 16px;
+  --rf-s-5: 20px;
+  --rf-s-6: 24px;
+  --rf-s-8: 32px;
+  --rf-s-10: 40px;
+  --rf-s-12: 48px;
+  --rf-s-16: 64px;
 
   /* Shape */
-  --rf-r-xs: 4px;
-  --rf-r-sm: 6px;
-  --rf-r: 8px;
-  --rf-r-md: 10px;
-  --rf-r-lg: 12px;
-  --rf-r-xl: 16px;
+  --rf-r-xs: 5px;
+  --rf-r-sm: 8px;
+  --rf-r: 10px;
+  --rf-r-md: 12px;
+  --rf-r-lg: 16px;
+  --rf-r-xl: 22px;
+  --rf-r-sheet: 26px;
   --rf-r-full: 999px;
 
-  /* Elevation */
-  --rf-shadow-xs: 0 1px 2px rgb(20 36 28 / .05);
-  --rf-shadow-sm: 0 1px 3px rgb(20 36 28 / .07), 0 1px 2px rgb(20 36 28 / .04);
-  --rf-shadow-md: 0 8px 20px -6px rgb(20 36 28 / .12), 0 2px 5px -2px rgb(20 36 28 / .06);
-  --rf-shadow-lg: 0 24px 60px -16px rgb(16 32 24 / .28), 0 8px 18px -8px rgb(16 32 24 / .12);
-  --rf-ring: 0 0 0 3px rgb(47 138 109 / .16);
+  /* Elevation: warm, diffuse shadows like paper lifting off a desk */
+  --rf-shadow-xs: 0 1px 2px rgb(60 45 25 / .06);
+  --rf-shadow-sm: 0 1px 2px rgb(60 45 25 / .05), 0 2px 8px -2px rgb(60 45 25 / .07);
+  --rf-shadow-md: 0 2px 4px rgb(60 45 25 / .04), 0 10px 26px -10px rgb(60 45 25 / .16);
+  --rf-shadow-lg: 0 4px 10px rgb(60 45 25 / .05), 0 28px 64px -22px rgb(50 38 20 / .30);
+  --rf-shadow-sheet: 0 0 0 1px rgb(120 100 70 / .07), 0 2px 6px rgb(60 45 25 / .04), 0 24px 60px -32px rgb(60 45 25 / .28);
+  --rf-shadow-inset: inset 0 1px 0 rgb(255 255 255 / .7);
+  --rf-ring: 0 0 0 3px rgb(95 148 128 / .2);
 
-  /* Motion */
+  /* Motion — durations, curves and springs (linear() approximations of damped springs) */
   --rf-ease-out: cubic-bezier(.22, 1, .36, 1);
   --rf-ease-in: cubic-bezier(.55, 0, 1, .45);
   --rf-ease-in-out: cubic-bezier(.65, 0, .35, 1);
-  --rf-ease-spring: cubic-bezier(.34, 1.4, .64, 1);
+  --rf-ease-ink: cubic-bezier(.16, .84, .3, 1);
+  --rf-ease-spring: linear(0, .009, .035 2.1%, .141 4.4%, .723 12.9%, .938 16.7%, 1.017 19.4%, 1.067, 1.099 24.3%, 1.106 26.3%, 1.098, 1.072 31.9%, 1.006 38.8%, .985 42.5%, .978 46%, .985 52.6%, .998 60.7%, 1.002 70.6%, 1);
+  --rf-ease-spring-soft: linear(0, .015, .059 3.6%, .232 7.6%, .683 16.4%, .858 21.2%, .962 25.9%, 1.016 30.6%, 1.039 35%, 1.041 39.5%, 1.03 45%, 1.006 56.6%, .997 67%, 1);
   --rf-dur-1: 120ms;
   --rf-dur-2: 200ms;
   --rf-dur-3: 320ms;
-  --rf-dur-4: 480ms;
+  --rf-dur-4: 520ms;
+  --rf-dur-5: 900ms;
+  --rf-stagger: 45ms;
 
   /* Layout */
-  --rf-sidebar-w: 256px;
+  --rf-sidebar-w: 268px;
   --rf-topbar-h: 60px;
+  --rf-desk-gap: 10px;
+  --rf-content-w: 1120px;
+}
+
+/* Following the clock (boot.js sets data-rf-tone): a cool, misty dawn and a warm apricot dusk tint the
+   paper, washes and landscape sky. Night uses the dark appearance; midday keeps the base palette. */
+:root[data-theme="light"][data-rf-tone="dawn"] {
+  --rf-desk: #e7e5dd;
+  --rf-bg: #f9f8f3;
+  --rf-art-sky-top: #ebeae4;
+  --rf-art-sky: #f4f3ee;
+  --rf-art-sun: #efc2a8;
+  --rf-art-sun-glow: rgb(239 194 168 / .4);
+  --rf-wash-1: #d0e1da;
+  --rf-wash-2: #f2e1d3;
+  --rf-wash-3: #d3dfea;
+}
+:root[data-theme="light"][data-rf-tone="dusk"] {
+  --rf-desk: #ece0cc;
+  --rf-bg: #fbf5ea;
+  --rf-art-sky-top: #f0e3d2;
+  --rf-art-sky: #f8eee1;
+  --rf-art-sun: #e5987a;
+  --rf-art-sun-glow: rgb(229 152 122 / .45);
+  --rf-wash-1: #d8d8c0;
+  --rf-wash-2: #f2d2ae;
+  --rf-wash-3: #e4d1d3;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     color-scheme: dark;
-    --rf-bg: #111413;
-    --rf-bg-subtle: #151918;
-    --rf-sidebar: #141817;
-    --rf-surface: #1a1e1d;
-    --rf-surface-2: #1f2422;
-    --rf-surface-3: #252b29;
-    --rf-hover: #232927;
-    --rf-active: #2a312e;
-    --rf-overlay: rgb(0 0 0 / .56);
-    --rf-topbar: rgb(17 20 19 / .8);
-    --rf-line: #2c3330;
-    --rf-line-soft: #242a28;
-    --rf-line-strong: #3d4643;
-    --rf-text: #eceeed;
-    --rf-text-2: #c9d0cc;
-    --rf-text-3: #a4ada9;
-    --rf-text-4: #78837e;
-    --rf-placeholder: #6f7a75;
-    --rf-accent: #23846a;
-    --rf-accent-hover: #29967a;
-    --rf-accent-press: #1e735c;
-    --rf-accent-text: #5ccfa6;
-    --rf-accent-soft: #13291f;
-    --rf-accent-soft-2: #173a2d;
-    --rf-accent-line: #235a47;
-    --rf-accent-mid: #2a9c7c;
-    --rf-on-accent: #ffffff;
-    --rf-focus: #47c29a;
-    --rf-selection: #1e4a3a;
-    --rf-warn: #e3ae5b;
-    --rf-warn-soft: #2a2215;
-    --rf-warn-line: #4f3f22;
-    --rf-danger: #f08a7e;
-    --rf-danger-soft: #2c1a18;
-    --rf-danger-line: #5a302b;
-    --rf-info: #8cb8e0;
-    --rf-info-soft: #172330;
-    --rf-inverse: #e9eeeb;
-    --rf-on-inverse: #16201b;
-    --rf-shadow-xs: 0 1px 2px rgb(0 0 0 / .3);
-    --rf-shadow-sm: 0 1px 3px rgb(0 0 0 / .35), 0 1px 2px rgb(0 0 0 / .25);
-    --rf-shadow-md: 0 10px 24px -8px rgb(0 0 0 / .55), 0 2px 6px -2px rgb(0 0 0 / .35);
-    --rf-shadow-lg: 0 28px 70px -18px rgb(0 0 0 / .7), 0 8px 22px -8px rgb(0 0 0 / .45);
-    --rf-ring: 0 0 0 3px rgb(71 194 154 / .22);
+    --rf-desk: #100f0d;
+    --rf-bg: #181714;
+    --rf-bg-subtle: #1c1b18;
+    --rf-surface: #201e1a;
+    --rf-surface-2: #252320;
+    --rf-surface-3: #2c2a25;
+    --rf-raised: #24221e;
+    --rf-hover: rgb(236 228 210 / .05);
+    --rf-active: rgb(236 228 210 / .085);
+    --rf-overlay: rgb(5 4 3 / .58);
+    --rf-topbar: rgb(24 23 20 / .78);
+    --rf-glass: rgb(32 30 26 / .6);
+    --rf-line: #34312b;
+    --rf-line-soft: #2a2824;
+    --rf-line-strong: #454138;
+    --rf-text: #ece6da;
+    --rf-text-2: #cfc8ba;
+    --rf-text-3: #a59e90;
+    --rf-text-4: #7a7366;
+    --rf-placeholder: #6f685c;
+    --rf-accent: #8cb7a2;
+    --rf-accent-hover: #9cc4b0;
+    --rf-accent-press: #7eaa95;
+    --rf-accent-text: #93c1ab;
+    --rf-accent-soft: #1d2a24;
+    --rf-accent-soft-2: #24362d;
+    --rf-accent-line: #355246;
+    --rf-accent-mid: #6e9a85;
+    --rf-on-accent: #111a15;
+    --rf-focus: #8cb7a2;
+    --rf-selection: #2d4a3d;
+    --rf-ochre: #d3a676;
+    --rf-ochre-soft: #2c241a;
+    --rf-cinnabar: #e08e78;
+    --rf-cinnabar-soft: #2e1d18;
+    --rf-indigo: #9bb6cf;
+    --rf-indigo-soft: #1b232c;
+    --rf-warn: #e1b469;
+    --rf-warn-soft: #2a2216;
+    --rf-warn-line: #4d3f24;
+    --rf-danger: #ec9583;
+    --rf-danger-soft: #2d1c18;
+    --rf-danger-line: #573128;
+    --rf-info: #9bb6cf;
+    --rf-info-soft: #1a222b;
+    --rf-success: #8cb7a2;
+    --rf-inverse: #ece6da;
+    --rf-on-inverse: #1b1a17;
+    --rf-art-sky-top: #15140f;
+    --rf-art-sky: #1b1a16;
+    --rf-art-sun: #e9e1cc;
+    --rf-art-sun-glow: rgb(233 225 204 / .14);
+    --rf-art-far: #323b37;
+    --rf-art-mid: #2a3530;
+    --rf-art-near: #222d27;
+    --rf-art-ink: #cfc6b4;
+    --rf-art-mist: #1a1915;
+    --rf-art-water: #34403a;
+    --rf-art-blossom: #c98a7d;
+    --rf-art-blossom-core: #e7b09d;
+    --rf-art-route: #c79a68;
+    --rf-art-vignette: #8da396;
+    --rf-wash-1: #1f2d27;
+    --rf-wash-2: #2c2419;
+    --rf-wash-3: #1d2530;
+    --rf-wash-strength: .7;
+    --rf-paper-grain: .06;
+    --rf-shadow-xs: 0 1px 2px rgb(0 0 0 / .32);
+    --rf-shadow-sm: 0 1px 2px rgb(0 0 0 / .3), 0 2px 8px -2px rgb(0 0 0 / .35);
+    --rf-shadow-md: 0 2px 4px rgb(0 0 0 / .25), 0 12px 28px -10px rgb(0 0 0 / .55);
+    --rf-shadow-lg: 0 4px 10px rgb(0 0 0 / .3), 0 30px 70px -24px rgb(0 0 0 / .7);
+    --rf-shadow-sheet: 0 0 0 1px rgb(236 228 210 / .06), 0 2px 6px rgb(0 0 0 / .25), 0 24px 60px -30px rgb(0 0 0 / .7);
+    --rf-shadow-inset: inset 0 1px 0 rgb(255 255 255 / .04);
+    --rf-ring: 0 0 0 3px rgb(140 183 162 / .24);
   }
 }
 
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --rf-bg: #111413;
-  --rf-bg-subtle: #151918;
-  --rf-sidebar: #141817;
-  --rf-surface: #1a1e1d;
-  --rf-surface-2: #1f2422;
-  --rf-surface-3: #252b29;
-  --rf-hover: #232927;
-  --rf-active: #2a312e;
-  --rf-overlay: rgb(0 0 0 / .56);
-  --rf-topbar: rgb(17 20 19 / .8);
-  --rf-line: #2c3330;
-  --rf-line-soft: #242a28;
-  --rf-line-strong: #3d4643;
-  --rf-text: #eceeed;
-  --rf-text-2: #c9d0cc;
-  --rf-text-3: #a4ada9;
-  --rf-text-4: #78837e;
-  --rf-placeholder: #6f7a75;
-  --rf-accent: #23846a;
-  --rf-accent-hover: #29967a;
-  --rf-accent-press: #1e735c;
-  --rf-accent-text: #5ccfa6;
-  --rf-accent-soft: #13291f;
-  --rf-accent-soft-2: #173a2d;
-  --rf-accent-line: #235a47;
-  --rf-accent-mid: #2a9c7c;
-  --rf-on-accent: #ffffff;
-  --rf-focus: #47c29a;
-  --rf-selection: #1e4a3a;
-  --rf-warn: #e3ae5b;
-  --rf-warn-soft: #2a2215;
-  --rf-warn-line: #4f3f22;
-  --rf-danger: #f08a7e;
-  --rf-danger-soft: #2c1a18;
-  --rf-danger-line: #5a302b;
-  --rf-info: #8cb8e0;
-  --rf-info-soft: #172330;
-  --rf-inverse: #e9eeeb;
-  --rf-on-inverse: #16201b;
-  --rf-shadow-xs: 0 1px 2px rgb(0 0 0 / .3);
-  --rf-shadow-sm: 0 1px 3px rgb(0 0 0 / .35), 0 1px 2px rgb(0 0 0 / .25);
-  --rf-shadow-md: 0 10px 24px -8px rgb(0 0 0 / .55), 0 2px 6px -2px rgb(0 0 0 / .35);
-  --rf-shadow-lg: 0 28px 70px -18px rgb(0 0 0 / .7), 0 8px 22px -8px rgb(0 0 0 / .45);
-  --rf-ring: 0 0 0 3px rgb(71 194 154 / .22);
+  --rf-desk: #100f0d;
+  --rf-bg: #181714;
+  --rf-bg-subtle: #1c1b18;
+  --rf-surface: #201e1a;
+  --rf-surface-2: #252320;
+  --rf-surface-3: #2c2a25;
+  --rf-raised: #24221e;
+  --rf-hover: rgb(236 228 210 / .05);
+  --rf-active: rgb(236 228 210 / .085);
+  --rf-overlay: rgb(5 4 3 / .58);
+  --rf-topbar: rgb(24 23 20 / .78);
+  --rf-glass: rgb(32 30 26 / .6);
+  --rf-line: #34312b;
+  --rf-line-soft: #2a2824;
+  --rf-line-strong: #454138;
+  --rf-text: #ece6da;
+  --rf-text-2: #cfc8ba;
+  --rf-text-3: #a59e90;
+  --rf-text-4: #7a7366;
+  --rf-placeholder: #6f685c;
+  --rf-accent: #8cb7a2;
+  --rf-accent-hover: #9cc4b0;
+  --rf-accent-press: #7eaa95;
+  --rf-accent-text: #93c1ab;
+  --rf-accent-soft: #1d2a24;
+  --rf-accent-soft-2: #24362d;
+  --rf-accent-line: #355246;
+  --rf-accent-mid: #6e9a85;
+  --rf-on-accent: #111a15;
+  --rf-focus: #8cb7a2;
+  --rf-selection: #2d4a3d;
+  --rf-ochre: #d3a676;
+  --rf-ochre-soft: #2c241a;
+  --rf-cinnabar: #e08e78;
+  --rf-cinnabar-soft: #2e1d18;
+  --rf-indigo: #9bb6cf;
+  --rf-indigo-soft: #1b232c;
+  --rf-warn: #e1b469;
+  --rf-warn-soft: #2a2216;
+  --rf-warn-line: #4d3f24;
+  --rf-danger: #ec9583;
+  --rf-danger-soft: #2d1c18;
+  --rf-danger-line: #573128;
+  --rf-info: #9bb6cf;
+  --rf-info-soft: #1a222b;
+  --rf-success: #8cb7a2;
+  --rf-inverse: #ece6da;
+  --rf-on-inverse: #1b1a17;
+  --rf-art-sky-top: #15140f;
+  --rf-art-sky: #1b1a16;
+  --rf-art-sun: #e9e1cc;
+  --rf-art-sun-glow: rgb(233 225 204 / .14);
+  --rf-art-far: #323b37;
+  --rf-art-mid: #2a3530;
+  --rf-art-near: #222d27;
+  --rf-art-ink: #cfc6b4;
+  --rf-art-mist: #1a1915;
+  --rf-art-water: #34403a;
+  --rf-art-blossom: #c98a7d;
+  --rf-art-blossom-core: #e7b09d;
+  --rf-art-route: #c79a68;
+  --rf-art-vignette: #8da396;
+  --rf-wash-1: #1f2d27;
+  --rf-wash-2: #2c2419;
+  --rf-wash-3: #1d2530;
+  --rf-wash-strength: .7;
+  --rf-paper-grain: .06;
+  --rf-shadow-xs: 0 1px 2px rgb(0 0 0 / .32);
+  --rf-shadow-sm: 0 1px 2px rgb(0 0 0 / .3), 0 2px 8px -2px rgb(0 0 0 / .35);
+  --rf-shadow-md: 0 2px 4px rgb(0 0 0 / .25), 0 12px 28px -10px rgb(0 0 0 / .55);
+  --rf-shadow-lg: 0 4px 10px rgb(0 0 0 / .3), 0 30px 70px -24px rgb(0 0 0 / .7);
+  --rf-shadow-sheet: 0 0 0 1px rgb(236 228 210 / .06), 0 2px 6px rgb(0 0 0 / .25), 0 24px 60px -30px rgb(0 0 0 / .7);
+  --rf-shadow-inset: inset 0 1px 0 rgb(255 255 255 / .04);
+  --rf-ring: 0 0 0 3px rgb(140 183 162 / .24);
 }

@@ -7,13 +7,16 @@ ResearchForge 四阶段提示词加载器
 阶段4: 基于文献知识库的 IDEA 优化（假说 + 理论贡献点名作者/年份/期刊）
 
 提示词本体存放在独立文件夹 `prompts/*.json`，可手动编辑，也可经前端（登录后）在线编辑。
-本模块仅负责加载 JSON 并提供 build_stage* 装配函数；每次调用都会重新读取，改动即时生效。
+本模块加载 JSON 并提供 build_stage* 装配函数；新任务保存提示词快照，恢复时沿用原版本。
 """
 import os
 import json
 import time
 import re
 import tempfile
+from contextvars import ContextVar
+
+TASK_PROMPTS = ContextVar('research_task_prompts', default=None)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 PROMPTS_DIR = os.path.join(BASE_DIR, 'prompts')
@@ -27,9 +30,15 @@ class PromptError(RuntimeError):
 
 
 def load_prompt(key: str) -> str:
-    """Only the current prompt file is authoritative; never fall back to old text."""
+    """Use the task snapshot when present; otherwise require the current file."""
     if key not in _KEYS:
         raise PromptError(f'未知提示词：{key}')
+    snapshot = TASK_PROMPTS.get()
+    if snapshot is not None:
+        value = snapshot.get(key)
+        if not isinstance(value, str) or not value.strip():
+            raise PromptError(f'任务保存的提示词 {key} 不完整，请新建研究。')
+        return value
     path = os.path.join(PROMPTS_DIR, key + '.json')
     try:
         with open(path, encoding='utf-8') as f:

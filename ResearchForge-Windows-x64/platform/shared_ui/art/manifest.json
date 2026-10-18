@@ -1,0 +1,41 @@
+{
+ "dawn": {
+  "width": 2800,
+  "height": 900,
+  "layers": [
+   "far",
+   "mid",
+   "near",
+   "mist"
+  ]
+ },
+ "lake": {
+  "width": 2800,
+  "height": 900,
+  "layers": [
+   "far",
+   "near",
+   "reflection",
+   "waves",
+   "reeds",
+   "mist"
+  ]
+ },
+ "isles": {
+  "width": 2800,
+  "height": 900,
+  "layers": [
+   "islands",
+   "reflection",
+   "waves",
+   "mist"
+  ]
+ },
+ "plum": {
+  "width": 1700,
+  "height": 1150,
+  "layers": [
+   "branch"
+  ]
+ }
+}

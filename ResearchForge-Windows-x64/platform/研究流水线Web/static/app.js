@@ -5,6 +5,11 @@ const S = {
   health: null, retrieval: null, views: {}, tasks: [], drafting: false,
 };
 const $ = id => document.getElementById(id);
+// Status polling re-applies the same values every few seconds; write only real changes so buttons,
+// hints and counters stay still (no rebuilt icons, interrupted hover or ripple animations).
+const put = (id, text) => { const el = $(id); text = String(text ?? ''); if (el.textContent !== text) el.textContent = text; };
+const putClass = (id, value) => { const el = $(id); if (el.className !== value) el.className = value; };
+const putHTML = (id, html) => { const el = $(id); if (el.dataset.html !== html) { el.dataset.html = html; el.innerHTML = html; } };
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const icon = name => `<svg class="icon" aria-hidden="true"><use href="/ui/icons.svg#i-${name}"/></svg>`;
 const transition = (update, type) => (window.RF?.transition ? window.RF.transition(update, type) : update());
@@ -16,11 +21,16 @@ function clearLegacyBrowserSettings() {
 clearLegacyBrowserSettings();
 window.addEventListener('pageshow', clearLegacyBrowserSettings);
 
-function toast(message, type = '') {
+function toast(message, type = '', action = null) {
   const el = $('toast'); el.textContent = message; el.className = type;
+  if (action) {
+    const button = document.createElement('button'); button.type = 'button'; button.textContent = action.label;
+    button.onclick = () => { el.hidden = true; action.run(); };
+    el.append(button);
+  }
   // Re-showing restarts the entrance animation so repeated notices stay noticeable.
   el.hidden = true; void el.offsetWidth; el.hidden = false;
-  clearTimeout(el._timer); el._timer = setTimeout(() => { el.hidden = true; }, 4500);
+  clearTimeout(el._timer); el._timer = setTimeout(() => { el.hidden = true; }, action ? 7000 : 4500);
 }
 function clog(message, type = 'info') {
   const body = $('cbody');
@@ -188,8 +198,14 @@ for (const [field, prefix] of [['count','cnt'],['selectionCount','select']]) {
 $('topic').addEventListener('keydown', e => {
   if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); runPipeline(); }
 });
+function fitTopic() {
+  const box = $('topic'); box.style.height = 'auto';
+  box.style.height = Math.min(Math.max(box.scrollHeight, 136), 360) + 'px';
+}
+$('topic').addEventListener('input', fitTopic);
 
 function modelLabel(model) {
+  if(model.provider==='chatgpt_plan')return `${model.label} · ${model.model} · ${model.reasoning_effort||'默认'} 思考`;
   return `${model.label} · ${model.model} · ${model.thinking === 'enabled' ? '思考模式' : `温度 ${model.temperature}`}`;
 }
 function renderModelConfig() {
@@ -212,34 +228,34 @@ async function pollPreparation() {
     if (!response.ok) throw new Error('状态查询失败');
     const old = S.retrieval; S.retrieval = await response.json(); const state = S.retrieval;
     const label = PREPARATION_LABELS[state.phase] || state.phase;
-    $('prep-message').textContent = label + (state.ready && state.language_quota ? ` · 每个构想中文 ${state.language_quota.zh} 篇 / 英文 ${state.language_quota.en} 篇` : ''); $('prep-error').textContent = state.error || '';
+    put('prep-message', label + (state.ready && state.language_quota ? ` · 每个构想取中文 ${state.language_quota.zh} 篇、英文 ${state.language_quota.en} 篇` : '')); put('prep-error', state.error || '');
     const languages = state.audit?.languages || {};
     const bilingualCounts = [languages.zh ? `中文 ${languages.zh.toLocaleString()} 篇` : '', languages.en ? `英文 ${languages.en.toLocaleString()} 篇` : ''].filter(Boolean).join(' · ');
-    $('prep-counts').textContent = `${(state.vectors_ready || 0).toLocaleString()} / ${(state.papers || 0).toLocaleString()} 篇${bilingualCounts ? ' · ' + bilingualCounts : ''} · ${state.model}`;
+    let counts = `${(state.vectors_ready || 0).toLocaleString()} / ${(state.papers || 0).toLocaleString()} 篇${bilingualCounts ? ' · ' + bilingualCounts : ''} · ${state.model}`;
     let progress = (state.coverage || 0) * 100;
     if (state.phase === 'downloading') {
       progress = state.download_total ? 100 * state.download_completed / state.download_total : 0;
-      $('prep-counts').textContent = `${state.model} · ${(state.download_completed / 1048576 || 0).toFixed(1)} / ${(state.download_total / 1048576 || 0).toFixed(1)} MB`;
+      counts = `${state.model} · ${(state.download_completed / 1048576 || 0).toFixed(1)} / ${(state.download_total / 1048576 || 0).toFixed(1)} MB`;
     }
-    $('prep-progress').value = state.ready ? 100 : progress;
+    put('prep-counts', counts);
+    const bar = state.ready ? 100 : progress; if ($('prep-progress').value !== bar) $('prep-progress').value = bar;
     S.retrievalProgress = state.ready ? 100 : progress;
     $('btn-prepare').classList.toggle('hide', !['idle','error'].includes(state.phase));
-    $('service-label').textContent = state.ready ? '文献库已就绪' : PREPARING.has(state.phase) ? label : state.error ? '文献库准备失败' : '文献库未准备';
-    $('service-dot').className = 'status-dot ' + (state.ready ? 'ready' : state.error ? 'error' : PREPARING.has(state.phase) ? 'running' : '');
+    put('service-label', state.ready ? '文献库已就绪' : PREPARING.has(state.phase) ? label : state.error ? '文献库准备失败' : '文献库未准备');
+    putClass('service-dot', 'status-dot ' + (state.ready ? 'ready' : state.error ? 'error' : PREPARING.has(state.phase) ? 'running' : ''));
     if (old?.phase !== state.phase) clog('文献库：' + label, state.error ? 'err' : 'info');
     if (state.ready && (!old?.ready || !['gen','judge','opt'].every(s => S.currentModels[s]))) await refreshHealth();
-    $('run-hint').textContent = retrievalHint();
-    $('run-hint').className = state.error ? 'error' : '';
   } catch (error) {
     S.retrieval = {...S.retrieval, ready:false};
-    $('prep-error').textContent = '无法连接服务：' + error.message;
-    $('service-label').textContent = '连接中断'; $('service-dot').className = 'status-dot error';
-    $('run-hint').textContent = '正在重新连接服务'; $('run-hint').className = 'error';
+    put('prep-error', '无法连接服务：' + error.message);
+    put('service-label', '连接中断'); putClass('service-dot', 'status-dot error');
+    // syncRunButton (in finally) owns run-hint, so the hint no longer flips between two writers.
   } finally {
     syncRunButton();
     // A single polling chain: an explicit refresh replaces the pending one.
     clearTimeout(S.prepTimer);
-    S.prepTimer = setTimeout(pollPreparation, S.retrieval?.ready || !PREPARING.has(S.retrieval?.phase) ? 5000 : 1500);
+    // A hidden tab checks rarely; it refreshes as soon as it is shown again.
+    S.prepTimer = setTimeout(pollPreparation, document.hidden ? 20000 : S.retrieval?.ready || !PREPARING.has(S.retrieval?.phase) ? 5000 : 1500);
   }
 }
 async function prepareRetrieval(button) {
@@ -259,10 +275,10 @@ const PREPARING = new Set(['starting','ollama','downloading','importing','embedd
 function retrievalHint() {
   const state = S.retrieval;
   if (!state) return '正在连接研究服务…';
-  if (state.ready) return '进度自动保存';
-  if (state.error) return '文献库准备失败';
-  if (PREPARING.has(state.phase)) return '文献库准备中，就绪后可筛选与检索';
-  return '文献库未就绪';
+  if (state.ready) return '';
+  if (state.error) return '文献库准备失败，精选前需要先修复';
+  if (PREPARING.has(state.phase)) return '文献库准备中，好了才能精选和查文献';
+  return '文献库还没准备，精选前需要先准备';
 }
 function renderReadiness() {
   const item = $('ready-corpus'), state = S.retrieval;
@@ -271,15 +287,17 @@ function renderReadiness() {
   if (state) {
     const languages = state.audit?.languages || {};
     const split = [languages.zh ? `中文 ${languages.zh.toLocaleString()}` : '', languages.en ? `英文 ${languages.en.toLocaleString()}` : ''].filter(Boolean).join(' / ');
-    if (state.ready) { mode = 'ok'; text = `已就绪 · ${(state.papers || 0).toLocaleString()} 篇${split ? '（' + split + '）' : ''}`; }
+    if (state.ready) { mode = 'ok'; text = languages.zh && languages.en ? `已就绪 · ${split} 篇` : `已就绪 · ${languages.zh ? '中文 ' : languages.en ? '英文 ' : ''}${(state.papers || 0).toLocaleString()} 篇`; }
     else if (state.error) { mode = 'error'; text = state.error; action = '重新准备'; }
     else if (PREPARING.has(state.phase)) { mode = 'busy'; text = `${PREPARATION_LABELS[state.phase] || state.phase} · ${Math.round(S.retrievalProgress || 0)}%`; }
     else { mode = 'warn'; text = '尚未准备'; action = '准备检索'; }
   }
   item.dataset.state = mode;
+  // When nothing needs attention the two cards fold into one quiet line.
+  $('readiness').classList.toggle('all-ready', mode === 'ok' && $('ready-api').dataset.state === 'ok');
   item.style.setProperty('--progress', (mode === 'busy' ? S.retrievalProgress || 0 : mode === 'ok' ? 100 : 0) + '%');
-  $('ready-corpus-text').textContent = text; $('ready-corpus-text').title = state?.message || '';
-  $('ready-corpus-action').hidden = !action; $('ready-corpus-action').textContent = action;
+  put('ready-corpus-text', text); if ($('ready-corpus-text').title !== (state?.message || '')) $('ready-corpus-text').title = state?.message || '';
+  if ($('ready-corpus-action').hidden !== !action) $('ready-corpus-action').hidden = !action; put('ready-corpus-action', action);
   $('ready-ideas-only').hidden = !state || state.ready || S.selectionCount === 0 || PREPARING.has(state.phase);
 }
 $('ready-corpus-action').onclick = () => prepareRetrieval($('ready-corpus-action'));
@@ -291,20 +309,26 @@ async function refreshApiReadiness() {
   const item = $('ready-api');
   if (!item) return;
   try {
-    const response = await fetch('/papers/api/settings', {cache:'no-store'});
+    const [response, modelResponse] = await Promise.all([fetch('/papers/api/settings', {cache:'no-store'}), fetch('/api/models/config', {cache:'no-store'})]);
     if (!response.ok) throw new Error('HTTP ' + response.status);
     const settings = await response.json();
+    if(modelResponse.ok){S.currentModels=(await modelResponse.json()).stage_models;renderModelConfig();}
     const used = [...new Set(['gen','judge','opt'].map(stage => S.currentModels[stage]?.provider).filter(Boolean))];
     const providers = used.length ? used.map(id => settings.providers.find(p => p.id === id)).filter(Boolean)
       : settings.providers.filter(p => p.id === settings.default_provider);
     const missing = providers.filter(p => !p.has_key);
+    S.apiReady = providers.length > 0 && missing.length === 0 && (!used.length || providers.length === used.length);
     item.dataset.state = !providers.length ? 'warn' : missing.length ? 'warn' : 'ok';
-    $('ready-api-text').textContent = !providers.length ? '尚未配置接口'
-      : missing.length ? `${missing.map(p => p.name).join('、')} · 未填写密钥`
-      : providers.map(p => `${p.name} · ${p.model}`).join('；');
+    $('ready-api-text').textContent = !providers.length ? '还没有配置接口'
+      : missing.length ? `${missing.map(p => p.name).join('、')} · 未登录或缺少密钥`
+      : providers.map(p => `${p.name} · 已连接`).join('；');
     $('ready-api-action').hidden = !(missing.length || !providers.length);
+    $('readiness').classList.toggle('all-ready', item.dataset.state === 'ok' && $('ready-corpus').dataset.state === 'ok');
   } catch {
+    S.apiReady = false;
     item.dataset.state = 'warn'; $('ready-api-text').textContent = '无法读取接口配置'; $('ready-api-action').hidden = false;
   }
+  if (typeof syncRunButton === 'function') syncRunButton();
 }
 window.addEventListener('focus', () => { if (!$('sec-config').classList.contains('hide')) refreshApiReadiness(); });
+document.addEventListener('visibilitychange', () => { if (!document.hidden && S.prepTimer) pollPreparation(); });

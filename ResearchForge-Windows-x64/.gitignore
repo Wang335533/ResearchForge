@@ -1,7 +1,30 @@
+# Personal runtime data and configuration (at any depth)
 user_data/
+work/
 config.json
+.env
+.env.*
+!.env.example
+.claude/
+.codex/
 .venv/
 __pycache__/
-*.pyc
-.DS_Store
+*.py[cod]
 *.log
+*.sqlite*
+*.db
+*.dpapi
+*.pem
+*.key
+*.bak
+.DS_Store
+Thumbs.db
+# Portable binaries and public models are distributed in Release archives.
+runtime/python/
+runtime/ollama/
+runtime/models/
+*/runtime/python/
+*/runtime/ollama/
+*/runtime/models/
+release/
+*.zip

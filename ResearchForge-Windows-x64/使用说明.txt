@@ -1,14 +1,6 @@
-ResearchForge 解压即用版
+ResearchForge Windows x64 · 2026-10-19
 
-适用：64 位 Windows 10 / Windows 11（x64）
-
-完整解压到路径较短的文件夹（例如 D:\ResearchForge）后，双击 START-WINDOWS.cmd。
-无需安装 Python、依赖或 Ollama。浏览器会自动打开。
-
-先在「论文精读 → 共享 API 设置」填写自己的 API，再上传论文。
-
-保持启动窗口打开。按 Ctrl+C 或关闭窗口停止。
-
-给同学分享，请发送最初的压缩包，不要发送已经使用过的 user_data。
-
-详细说明见 README.md。
+完整解压后双击 START-WINDOWS.cmd。关闭启动窗口不会关闭后台工作台。
+初次使用请在共享 API 设置配置自己的服务或独立登录。
+本包没有个人文献、索引、研究记录、密钥或已登录账号。
+详细下载、配置、数据备份与开发说明见 README.md。

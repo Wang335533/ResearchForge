@@ -58,8 +58,8 @@ def context(task,idea_id,kind):
 
 
 def candidate(row,reason):
-    path=Path(row['path']).resolve();root=library.LIBRARY_ROOT.resolve()
-    available=path.is_relative_to(root) and path.suffix.lower() in ('.md','.markdown','.txt','.pdf') and path.is_file()
+    path=Path(row['path']).resolve()
+    available=library.authorized_source(path) and path.suffix.lower() in ('.md','.markdown','.txt','.pdf') and path.is_file()
     if available:available=path.stat().st_size<=40*1024*1024
     return dict(uid=row['paper_uid'],title=library.plain(row['title']),year=row['year'],journal=library.plain(row['journal']),
                 doi=row['doi'] or '',filename=path.name,available=available,match_reason=reason)
@@ -69,10 +69,12 @@ def resolve(refs):
     """One bounded indexed batch, including case-insensitive DOI lookup."""
     titles=list({library.normalized(str(r.get('title') or '')) for r in refs}-{''})
     dois=list({doi(r.get('doi')) for r in refs}-{''})
-    rows={};bytitle={};bydoi={}
+    rows={};bytitle={};bydoi={};requires_preview=False
     columns='paper_uid,path,title,title_norm,year,journal,doi,excluded'
     if titles or dois:
         with library.connect() as db:
+            meta = dict(db.execute('SELECT key,value FROM index_meta'))
+            requires_preview = meta.get('identity_verification') == 'preview'
             if titles:
                 for r in db.execute('SELECT '+columns+' FROM papers INDEXED BY idx_papers_title_norm WHERE title_norm IN ('+','.join('?' for _ in titles)+')',titles):
                     if not r['excluded']:rows[r['paper_uid']]=dict(r)
@@ -97,7 +99,8 @@ def resolve(refs):
             if conflict:reason+='；DOI 不一致，需核对版本或索引'
             if year_diff:reason+='；年份不同，需核对发表版本'
             c=candidate(r,reason);options.append(c)
-            if c['available'] and not conflict and not year_diff and title_equal:exact.append(c)
+            if requires_preview:c['match_reason'] += '；文件定位记录，须预览核对原文'
+            if c['available'] and not conflict and not year_diff and title_equal and not requires_preview:exact.append(c)
         if len(found)==1 and len(exact)==1:
             results.append(dict(status='matched',message=exact[0]['match_reason'],candidates=options,uid=exact[0]['uid']))
         elif options:
@@ -128,7 +131,9 @@ def import_reference(task,idea_id,kind,index,uid,confirmed,importer,get_doc,docu
     if not confirmed:
         matched=resolve([ref])[0]
         if matched['status']!='matched' or matched['uid']!=uid:raise ValueError('没有唯一、可靠的原文匹配，请预览并确认选择。')
-    record=library.paper(uid);st=Path(record['path']).stat()
+    record=library.paper(uid)
+    if not record.get('path'):raise ValueError('本机全文库里没有这篇论文的原文。')
+    st=Path(record['path']).stat()
     origin.update(index=index,reference={k:ref.get(k) for k in FIELDS},match_method='用户预览后选定' if confirmed else '准确书目匹配',imported_at=time.time())
     key=hashlib.sha256(json.dumps([origin['task_id'],origin['idea_id'],kind,index,ref,uid,st.st_mtime_ns,st.st_size,origin['research']],sort_keys=True,ensure_ascii=False).encode()).hexdigest()
     with storage.DB_LOCK,storage.connect() as db:

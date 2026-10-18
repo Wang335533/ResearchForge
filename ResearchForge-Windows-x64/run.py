@@ -32,11 +32,19 @@ def configure(cfg, workspace_override=None):
     workspace = resolve_path(workspace_override or cfg.get('workspace','user_data'))
     workspace.mkdir(parents=True, exist_ok=True)
     papers = resolve_path(cfg.get('papers','user_data/papers'))
+    roots = cfg.get('fulltext_roots', [])
+    if not isinstance(roots, list) or any(not isinstance(p, str) or not p.strip() for p in roots):
+        raise ValueError('fulltext_roots 必须是全文目录路径的数组。')
+    library_roots = list(dict.fromkeys([str(papers), *(str(resolve_path(p)) for p in roots)]))
     imports = resolve_path(cfg.get('prompt_import','user_data/prompt-import'))
     corpus = resolve_path(cfg.get('corpus','user_data/corpus.csv'))
+    # Optional manifest of the literature website API (base URL, key, mode); read only when searching.
+    manifest = str(resolve_path(cfg['literature_api_manifest'])) if cfg.get('literature_api_manifest') else ''
     if workspace_override:
+        manifest = ''
         # Tests and portable demo runs cannot read this installation's real input.
         papers,imports,corpus=workspace/'papers',workspace/'prompt-import',workspace/'corpus.csv'
+        library_roots = [str(papers)]
     for folder in (workspace/'research',workspace/'reader',papers,imports):
         folder.mkdir(parents=True,exist_ok=True)
     os.environ.update({
@@ -49,7 +57,9 @@ def configure(cfg, workspace_override=None):
         'RF_PAPER_READER_ROOT':str(ROOT/'platform/paper_reader'),
         'PAPERLENS_DATA_DIR':str(workspace/'reader'),
         'PAPERLENS_LIBRARY_ROOT':str(papers),
+        'PAPERLENS_LIBRARY_ROOTS':json.dumps(library_roots,ensure_ascii=False),
         'PAPERLENS_LIBRARY_INDEX':str(workspace/'fulltext-index.sqlite3'),
+        'PAPERLENS_LITERATURE_MANIFEST':manifest,
         'PAPERLENS_PROMPT_SOURCE':str(imports), 'PAPERLENS_NO_IMPORT':'1',
         'RF_AUTO_PREPARE':'1' if cfg.get('auto_prepare',False) else '0',
         'OLLAMA_HOST':cfg.get('ollama_host','http://127.0.0.1:11434'),
@@ -64,7 +74,7 @@ def configure(cfg, workspace_override=None):
         with credential.open('x',encoding='utf-8') as stream:
             stream.write(secrets.token_urlsafe(18)+'\n')
         credential.chmod(0o600)
-    os.environ['RF_SHARE_ADMIN_PASSWORD']=credential.read_text().strip()
+    os.environ['RF_SHARE_ADMIN_PASSWORD']=credential.read_text(encoding='utf-8').strip()
     return workspace
 
 

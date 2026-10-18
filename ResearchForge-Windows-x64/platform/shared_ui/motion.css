@@ -1,0 +1,73 @@
+/* Keyframes and reveal states used across the workspace.
+   Entrances animate the individual `translate`/`scale`/`opacity` properties so they compose with
+   pointer parallax, which owns `transform`. Reduced-motion rules live at the end of shell.css. */
+
+/* ---------------------------------------------------------------- Reveal on scroll / insert */
+.rf-reveal { opacity: 0; translate: 0 14px; }
+.rf-reveal.is-in {
+  opacity: 1; translate: 0 0;
+  transition: opacity 700ms var(--rf-ease-out), translate 900ms var(--rf-ease-ink);
+  transition-delay: calc(min(var(--i, 0), 14) * var(--rf-stagger));
+}
+.rf-unfold { animation: rf-unfold 760ms var(--rf-ease-ink) both; animation-delay: calc(min(var(--i, 0), 14) * var(--rf-stagger)); transform-origin: 50% 0; }
+
+/* ---------------------------------------------------------------- Keyframes */
+@keyframes rf-vt-out { to { opacity: 0; translate: 0 -6px; } }
+@keyframes rf-vt-in { from { opacity: 0; translate: 0 18px; } }
+@keyframes rf-vt-in-forward { from { opacity: 0; translate: 36px 0; } }
+@keyframes rf-vt-in-backward { from { opacity: 0; translate: -36px 0; } }
+@keyframes rf-fade-out { to { opacity: 0; } }
+@keyframes rf-vt-soft { from { opacity: 0; translate: 0 8px; } }
+@keyframes rf-vt-soft-forward { from { opacity: 0; translate: 14px 0; } }
+@keyframes rf-vt-soft-backward { from { opacity: 0; translate: -14px 0; } }
+@keyframes rf-fade-in { from { opacity: 0; } }
+@keyframes rf-rise { from { opacity: 0; translate: 0 12px; } }
+@keyframes rf-unfold { from { opacity: 0; translate: 0 18px; scale: .985; } }
+@keyframes rf-pop { from { opacity: 0; scale: .9; } }
+@keyframes rf-flash { 0% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--rf-accent) 40%, transparent); } 100% { box-shadow: 0 0 0 14px transparent; } }
+@keyframes rf-toast-in { from { opacity: 0; translate: -50% 18px; scale: .94; } to { opacity: 1; translate: -50% 0; scale: 1; } }
+@keyframes rf-shimmer { from { background-position: 100% 0; } to { background-position: -100% 0; } }
+@keyframes rf-flow { from { background-position: 0 0; } to { background-position: -200% 0; } }
+@keyframes rf-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
+@keyframes rf-spin { to { rotate: 360deg; } }
+@keyframes rf-breathe {
+  0% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--rf-accent) 45%, transparent); }
+  70% { box-shadow: 0 0 0 7px transparent; }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+@keyframes rf-ink-in {
+  from { opacity: 0; translate: 0 .35em; filter: blur(6px); }
+  60% { filter: blur(0); }
+  to { opacity: 1; translate: 0 0; filter: none; }
+}
+@keyframes rf-layer-in { from { opacity: 0; translate: 0 36px; } to { opacity: var(--o, 1); translate: 0 0; } }
+@keyframes rf-mist-drift { from { translate: -5% 0; } to { translate: 4% 0; } }
+@keyframes rf-sway { from { rotate: -1.1deg; } to { rotate: 1.3deg; } }
+@keyframes rf-sun-rise { from { opacity: 0; translate: -50% -10%; scale: .8; } to { opacity: .9; translate: -50% -50%; scale: 1; } }
+@keyframes rf-breathe-glow { 0%, 100% { scale: 1; opacity: .9; } 50% { scale: 1.035; opacity: 1; } }
+@keyframes rf-birds { from { translate: -40vw 18px; } to { translate: 40vw -24px; } }
+@keyframes rf-flap { from { scale: 1 1; } to { scale: 1 .55; } }
+@keyframes rf-draw { to { stroke-dashoffset: 0; } }
+@keyframes rf-bloom { from { opacity: 0; scale: .2; rotate: -40deg; } }
+@keyframes rf-petal {
+  0% { opacity: 0; translate: 0 0; rotate: 0deg; }
+  8% { opacity: .85; }
+  85% { opacity: .7; }
+  100% { opacity: 0; translate: -160px 420px; rotate: 540deg; }
+}
+@keyframes rf-ripple-line { 0%, 100% { opacity: 0; scale: .6 1; } 45% { opacity: .55; scale: 1 1; } }
+@keyframes rf-shimmer-y { from { scale: 1 .92; opacity: .25; } to { scale: 1.05 1.04; opacity: .42; } }
+@keyframes rf-enso-draw { from { opacity: 0; rotate: -100deg; scale: .7; } to { opacity: .7; rotate: 0deg; scale: 1; } }
+@keyframes rf-slow-turn { to { rotate: 360deg; } }
+@keyframes rf-stamp {
+  0% { opacity: 0; scale: 1.9; rotate: -18deg; }
+  18% { opacity: 1; scale: .94; rotate: -6deg; }
+  26% { scale: 1.02; }
+  32% { scale: 1; }
+  78% { opacity: 1; }
+  100% { opacity: 0; scale: 1; rotate: -6deg; translate: -50% -70%; }
+}
+@keyframes rf-theme-reveal { from { clip-path: circle(0 at var(--rf-theme-x, 50%) var(--rf-theme-y, 50%)); } to { clip-path: circle(var(--rf-theme-r, 150vmax) at var(--rf-theme-x, 50%) var(--rf-theme-y, 50%)); } }
+@keyframes rf-check-draw { from { stroke-dashoffset: 24; } to { stroke-dashoffset: 0; } }
+@keyframes rf-float { 0%, 100% { translate: 0 0; } 50% { translate: 0 -6px; } }
+@keyframes rf-ring-pulse { 0% { scale: .9; opacity: .6; } 100% { scale: 1.5; opacity: 0; } }

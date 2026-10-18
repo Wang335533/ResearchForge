@@ -316,7 +316,7 @@ class RetrievalService:
             with ls.locked(self.index_dir.parent / (".prepare-"+self.index_dir.name)):
                 if hasattr(self.backend, "ensure"):
                     self.backend.ensure(self.update)
-                self.update(phase="importing", message="导入合格文献")
+                self.update(phase="importing", message="导入文献")
                 audit = import_corpus(self.source, self.index_dir, self.update)
                 self.update(papers=audit["papers"], source_sha256=audit["source_sha256"], audit=audit)
                 profile = json.dumps(self.backend.identity(), sort_keys=True, ensure_ascii=False)
@@ -338,14 +338,14 @@ class RetrievalService:
                 vector_meta = json.loads((self.index_dir/"vectors.json").read_text(encoding="utf-8"))
                 stat = self.source.stat()
                 self._source_stat = (stat.st_size, stat.st_mtime_ns)
-                self.update(phase="ready", ready=True, error=None, message="全库混合检索已就绪",
+                self.update(phase="ready", ready=True, error=None, message="已就绪",
                             papers=state["papers"], vectors_ready=state["vectors_ready"], dimensions=vector_meta["dimensions"], finished_at=time.time())
         except Exception as exc:
             self.update(phase="error", ready=False, error=str(exc), message="准备失败，可点击重试", finished_at=time.time())
 
     def retrieve(self, query, recent_year_min):
         if not self.status()["ready"]:
-            raise NotReady("检索尚未就绪，请等待模型与全库向量准备完成。")
+            raise NotReady("文献库还在准备，完成后即可检索。")
         # Validate before index/model access. Bad input must not invalidate readiness.
         ls.make_queries(query)
         try:
@@ -377,7 +377,10 @@ class RetrievalService:
             # with additional papers from the other one or duplicate references.
             count = min(LANGUAGE_PAPER_LIMIT, *(len(by_language[x]) for x in LANGUAGES))
             if count < LANGUAGE_PAPER_LIMIT:
-                warnings.append(f"中英文候选不足：中文 {len(by_language['zh'])} 篇、英文 {len(by_language['en'])} 篇；为保持等额，本次各选 {count} 篇，未用另一语言补齐。")
+                if len(LANGUAGES) == 1:
+                    warnings.append(f"当前语料候选不足 {LANGUAGE_PAPER_LIMIT} 篇，本次选取 {count} 篇。")
+                else:
+                    warnings.append(f"中英文候选不足：中文 {len(by_language['zh'])} 篇、英文 {len(by_language['en'])} 篇；为保持等额，本次各选 {count} 篇，未用另一语言补齐。")
             selected = []
             for rank in range(count):
                 for language in LANGUAGES:

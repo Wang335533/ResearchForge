@@ -1,7 +1,0 @@
-user_data/
-config.json
-.venv/
-__pycache__/
-*.pyc
-.DS_Store
-*.log

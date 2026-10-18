@@ -49,11 +49,15 @@ def install(app, llm_config, reader_root=None, task_loader=None):
         item = next((p for p in config.settings()['providers'] if p['id']==provider), None)
         if item is None:
             return dict(llm_config.PROVIDERS[provider])
-        return dict(label=item['name'], endpoint=item['endpoint'], api_key=item['api_key'])
+        return dict(label=item['name'], endpoint=item['endpoint'], api_key=item['api_key'],
+                    model=item['model'], reasoning_effort=item.get('reasoning_effort'))
 
     def stage_config(stage):
         result = original_stage(stage)
-        result['api_key'] = connection(result['provider'])['api_key']
+        shared = connection(result['provider'])
+        result['api_key'] = shared['api_key']
+        if result['provider'] == 'chatgpt_plan':
+            result.update(model=shared['model'], reasoning_effort=shared.get('reasoning_effort'))
         return result
 
     def public_stages():
@@ -61,6 +65,8 @@ def install(app, llm_config, reader_root=None, task_loader=None):
         for value in result.values():
             shared = connection(value['provider'])
             value.update(label=shared['label'], endpoint=shared['endpoint'])
+            if value['provider'] == 'chatgpt_plan':
+                value.update(model=shared['model'], reasoning_effort=shared.get('reasoning_effort'))
         return result
 
     llm_config.connection_config = connection
@@ -71,4 +77,5 @@ def install(app, llm_config, reader_root=None, task_loader=None):
     app.wsgi_app = DispatcherMiddleware(app.wsgi_app, {'/papers': reader.app})
     app.extensions['paper_reader'] = reader
     reader.memory_jobs.start()
+    reader.reading_sync.start()
     return reader

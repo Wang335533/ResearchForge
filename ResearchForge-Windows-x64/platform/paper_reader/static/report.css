@@ -1,49 +1,92 @@
 /* Report typography. Also embedded in exported HTML, where the workspace tokens are absent: keep fallbacks. */
 .report {
   font-family: var(--rf-font, -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif);
-  color: var(--rf-text, #25352e); line-height: 1.95; font-size: 16px; overflow-wrap: anywhere;
+  color: var(--rf-text, #2a2722); line-height: 1.95; font-size: 16px; overflow-wrap: anywhere;
+  font-feature-settings: "palt" 0;
 }
+.report :is(h1, h2, h3) { font-family: var(--rf-font-serif, "Source Han Serif SC", "Noto Serif CJK SC", "Songti SC", "STSong", Georgia, serif); color: var(--rf-text, #2a2722); }
 .report h1 {
-  margin: 36px 0 20px; padding-bottom: 12px;
-  border-bottom: 1px solid var(--rf-line, #dce5d8);
-  font-size: 1.5em; line-height: 1.5; font-weight: 650; letter-spacing: -.3px;
+  position: relative; margin: 44px 0 22px; padding-bottom: 14px;
+  font-size: 1.55em; line-height: 1.45; font-weight: 600; letter-spacing: .01em;
+  border-bottom: 1px solid var(--rf-line, #e5ddcd);
 }
+.report h1::after { content: ''; position: absolute; left: 0; bottom: -1px; width: 56px; height: 2px; border-radius: 2px; background: var(--rf-accent-mid, #7ea692); }
 .report h1:first-child { margin-top: 0; }
-.report h2 { margin: 32px 0 12px; font-size: 1.14em; line-height: 1.6; font-weight: 650; scroll-margin-top: 100px; }
-.report h2::before { content: ''; display: inline-block; width: 4px; height: .9em; margin-right: 10px; vertical-align: -.08em; border-radius: 2px; background: var(--rf-accent-mid, #56ba9f); }
-.report h3 { margin: 22px 0 10px; font-size: 1em; font-weight: 650; scroll-margin-top: 100px; }
+.report h2 { margin: 36px 0 14px; font-size: 1.2em; line-height: 1.55; font-weight: 600; scroll-margin-top: 100px; }
+.report h2::before { content: ''; display: inline-block; width: 14px; height: 2px; margin-right: 10px; vertical-align: .32em; border-radius: 2px; background: var(--rf-ochre, #a9774a); }
+.report h3 { margin: 24px 0 10px; font-size: 1.04em; font-weight: 600; scroll-margin-top: 100px; }
 .report h4 { margin: 18px 0 8px; font-size: 1em; }
 .report p { margin: 0 0 16px; }
 .report ul, .report ol { margin: 12px 0 20px; padding-left: 1.6em; }
 .report li { margin: 6px 0; }
-.report li::marker { color: var(--rf-accent-text, #2d6654); }
+.report li::marker { color: var(--rf-accent-text, #3d6b59); }
 .report li p { margin: 4px 0; }
-.report a { color: var(--rf-accent-text, #2d6654); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--rf-accent-line, #aedcc6); }
+.report a { color: var(--rf-accent-text, #3d6b59); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--rf-accent-line, #b6cfbf); }
 .report blockquote {
-  margin: 20px 0; padding: 12px 20px;
-  border-left: 3px solid var(--rf-accent-mid, #90ad93); border-radius: 0 8px 8px 0;
-  background: var(--rf-accent-soft, #f0f5ee); color: var(--rf-text-2, #52665a);
+  margin: 22px 0; padding: 14px 20px;
+  border-left: 3px solid var(--rf-ochre, #a9774a); border-radius: 0 10px 10px 0;
+  background: var(--rf-ochre-soft, #f5ebdc); color: var(--rf-text-2, #4a453d);
 }
 .report blockquote p:last-child { margin: 0; }
-.report table { display: block; max-width: 100%; margin: 22px 0; overflow-x: auto; border-collapse: collapse; font-size: .875em; }
-.report th, .report td { min-width: 100px; padding: 10px 14px; border: 1px solid var(--rf-line, #dce4d9); text-align: left; vertical-align: top; }
-.report th { background: var(--rf-surface-2, #f0f4ed); font-weight: 600; }
-.report tr:nth-child(even) td { background: var(--rf-bg-subtle, #fafcf9); }
-.report code { padding: 2px 5px; border-radius: 4px; background: var(--rf-surface-3, #eef3ec); font-family: var(--rf-font-mono, ui-monospace, SFMono-Regular, Menlo, monospace); font-size: .85em; }
-.report pre { overflow: auto; padding: 18px; border: 1px solid var(--rf-line, #dce4d9); border-radius: 8px; background: var(--rf-surface-2, #f0f4ed); line-height: 1.7; white-space: pre-wrap; }
+/* Tables: the renderer wraps each in .table-wrap (cols-N = column count). The table fills the column;
+   wide tables keep about 8.5em per column and scroll sideways instead of squeezing text into slivers. */
+.report .table-wrap {
+  max-width: 100%; margin: 22px 0 26px; overflow-x: auto; overscroll-behavior-x: contain;
+  border: 1px solid var(--rf-line, #e5ddcd); border-radius: 12px; box-shadow: var(--rf-shadow-xs, 0 1px 2px rgb(60 45 25 / .06));
+  /* Scroll shadows: an edge darkens only while more columns lie beyond it. */
+  background:
+    linear-gradient(to right, var(--rf-surface, #fffdf8) 40%, transparent) left / 28px 100% no-repeat local,
+    linear-gradient(to left, var(--rf-surface, #fffdf8) 40%, transparent) right / 28px 100% no-repeat local,
+    radial-gradient(farthest-side at 0 50%, rgb(60 45 25 / .16), transparent) left / 12px 100% no-repeat scroll,
+    radial-gradient(farthest-side at 100% 50%, rgb(60 45 25 / .16), transparent) right / 12px 100% no-repeat scroll,
+    var(--rf-surface, #fffdf8);
+}
+.report table { width: 100%; margin: 0; border-collapse: collapse; font-size: .875em; line-height: 1.75; font-variant-numeric: tabular-nums; }
+.report .cols-4 table { min-width: 36em; }
+.report .cols-5 table { min-width: 46em; }
+.report .cols-6 table { min-width: 56em; }
+.report .cols-7 table { min-width: 66em; }
+.report :is(.cols-8, .cols-9, .cols-10) table { min-width: 76em; }
+.report th, .report td { padding: 9px 14px; border-bottom: 1px solid var(--rf-line-soft, #eee8dc); text-align: left; vertical-align: top; }
+.report :is(th, td) + :is(th, td) { border-left: 1px solid var(--rf-line-soft, #eee8dc); }
+.report thead th {
+  background: var(--rf-surface-2, #f6f2e9); color: var(--rf-text, #2a2722); font-weight: 600; white-space: nowrap;
+  border-bottom: 1px solid var(--rf-line, #e5ddcd);
+}
+.report tbody tr:last-child > td { border-bottom: 0; }
+.report tbody tr:nth-child(even) > td { background: color-mix(in oklab, var(--rf-bg-subtle, #faf7f1) 70%, transparent); }
+.report tbody tr:hover > td { background: var(--rf-hover, rgb(120 100 70 / .05)); }
+.report tbody td:first-child { min-width: 6em; color: var(--rf-text, #2a2722); font-weight: 550; }
+/* In the reading page the article has wide side padding: tables step into it for a little more room. */
+.report-layout > .report .table-wrap { margin-left: -28px; margin-right: -28px; max-width: calc(100% + 56px); }
+.report :is(th, td)[align="right"] { text-align: right; }
+.report :is(th, td)[align="center"] { text-align: center; }
+.report td p { margin: 0; }
+.report td .katex { font-size: 1em; }
+.report code { padding: 2px 6px; border-radius: 5px; background: var(--rf-surface-3, #efe9dd); font-family: var(--rf-font-mono, ui-monospace, SFMono-Regular, Menlo, monospace); font-size: .85em; }
+.report pre { overflow: auto; padding: 18px; border: 1px solid var(--rf-line, #e5ddcd); border-radius: 12px; background: var(--rf-surface-2, #f6f2e9); line-height: 1.7; white-space: pre-wrap; }
 .report pre code { padding: 0; background: transparent; }
-.report hr { margin: 28px 0; border: 0; border-top: 1px solid var(--rf-line, #dce4d9); }
+.report hr { margin: 32px 0; border: 0; height: 1px; background: linear-gradient(90deg, transparent, var(--rf-line-strong, #d4c9b4), transparent); }
 .report strong { font-weight: 650; color: var(--rf-text, inherit); }
-.report.standalone { max-width: 940px; margin: 50px auto; padding: 0 35px 60px; }
+.report.standalone { max-width: 900px; margin: 56px auto; padding: 0 36px 64px; }
 .report sup { font-size: .7em; }
-.report .katex-display { max-width: 100%; padding: 9px 0; overflow-x: auto; overflow-y: hidden; }
-.report .katex { font-size: 1.08em; }
+/* Display formulas sit on a faint paper slip, centred, scrolling sideways when long. */
+.report .katex-display {
+  max-width: 100%; margin: 18px 0 20px; padding: 14px 18px; overflow-x: auto; overflow-y: hidden;
+  border-radius: 10px; background: color-mix(in oklab, var(--rf-bg-subtle, #f5f1e8) 75%, transparent);
+  border-left: 2px solid var(--rf-accent-line, #b6cfbf);
+}
+.report .katex-display > .katex { font-size: 1.12em; }
+.report .katex { font-size: 1.06em; }
+.report p .katex, .report li .katex { padding: 0 .12em; }
 .report .arithmatex { overflow-wrap: normal; }
 @media print {
   .report { color: #111; font-size: 11pt; }
   .report.standalone { max-width: none; margin: 0; padding: 0; }
   .report h1, .report h2, .report h3 { break-after: avoid; }
-  .report table { display: table; width: 100%; font-size: 9pt; }
+  .report .table-wrap { overflow: visible; border-radius: 0; box-shadow: none; }
+  .report table, .report .table-wrap table { width: 100%; min-width: 0; font-size: 9pt; }
+  .report .katex-display { background: none; border-left: 0; padding: 6px 0; }
   .report tr { break-inside: avoid; }
   .report a { color: inherit; }
   .report pre { white-space: pre-wrap; }

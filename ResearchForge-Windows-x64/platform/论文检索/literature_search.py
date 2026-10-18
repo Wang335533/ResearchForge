@@ -561,6 +561,24 @@ def atomic_json(path, data):
     replace_file(temp, path)
 
 
+def snapshot_current(con, folder):
+    """Reuse intact matrices only when they match this database revision/model."""
+    folder = Path(folder)
+    try:
+        meta = json.loads((folder / 'vectors.json').read_text(encoding='utf-8'))
+        if (meta.get('revision') != get_meta(con, 'revision') or
+                meta.get('profile') != get_meta(con, 'embedding_profile') or
+                meta.get('count') != vector_count(con)):
+            return False
+        np = np_module()
+        matrix = np.load(folder / 'vectors.npy', mmap_mode='r', allow_pickle=False)
+        ids = np.load(folder / 'vector_ids.npy', mmap_mode='r', allow_pickle=False)
+        return (matrix.shape == (meta['count'], meta['dimensions']) and ids.shape == (meta['count'],)
+                and matrix.dtype == np.float32 and ids.dtype == np.int64)
+    except (OSError, ValueError, KeyError, TypeError, EOFError):
+        return False
+
+
 def snapshot(con, folder):
     """Cache exact-search matrices; interrupted embeddings remain in SQLite."""
     np = np_module()
@@ -631,7 +649,8 @@ def embed_library(folder, backend, batch_size=24, max_seconds=0, progress=None):
                 print(f"本次已计算 {completed:,}篇向量", file=sys.stderr, flush=True)
         if progress:
             progress(phase="snapshot", papers=total, vectors_ready=vector_count(con))
-        snapshot(con, folder)
+        if not snapshot_current(con, folder):
+            snapshot(con, folder)
         n = con.execute("SELECT count(*) FROM papers").fetchone()[0]
         ready = vector_count(con)
         return {"papers": n, "vectors_ready": ready, "complete": ready == n, "new_vectors": completed, "clipped_this_run": clipped, "max_chars": backend.max_chars, "seconds": round(time.monotonic()-started, 3), "note": "首次全量建库；中断后重跑同命令可续算。时间预算在批次之间检查。"}
@@ -733,9 +752,7 @@ def dense_search(con, folder, queries, filters, pool, backend, allow_partial=Fal
     n, ready = con.execute("SELECT count(*) FROM papers").fetchone()[0], vector_count(con)
     if ready != n and not allow_partial:
         raise SearchError(f"向量未完成或已过期：{ready}/{n}。重跑embed，或明确使用 --allow-partial。")
-    meta_path = Path(folder) / "vectors.json"
-    meta = json.loads(meta_path.read_text()) if meta_path.exists() else {}
-    if meta.get("revision") != get_meta(con, "revision") or meta.get("profile") != saved or meta.get("count") != ready or not all((Path(folder)/f).exists() for f in ("vectors.npy", "vector_ids.npy")):
+    if not snapshot_current(con, folder):
         snapshot(con, folder)
     if not ready:
         raise SearchError("没有可使用的向量。")

@@ -1,6 +1,7 @@
 """Durable research jobs with one coordinator and bounded parallel calls."""
 from concurrent.futures import ThreadPoolExecutor
 import contextlib
+from contextvars import ContextVar
 import json
 import os
 from pathlib import Path
@@ -10,12 +11,14 @@ import time
 import uuid
 
 from idea_csv import IdeaCSV, initialize as initialize_idea_csv, save_task_rows
-from prompts import abstract_first_sentence
+from prompts import abstract_first_sentence, TASK_PROMPTS
 from output_format import FIELD_COMPLETION_ALLOWED
 
 
 ACTIVE = {'queued', 'running', 'stopping'}
+TASK_MODELS = ContextVar('research_task_models', default=None)
 GENERATION_BATCH_SIZE = 10
+STAGE_NAMES = {1: '构想', 2: '评审', 3: '检索', 4: '提案'}
 JUDGE_BATCH_SIZE = 20
 DEFAULT_CONCURRENCY = dict(max_parallel_tasks=3, max_api_calls=4, max_task_calls=3)
 
@@ -58,7 +61,7 @@ def note(task, message):
 def summary(task):
     return dict({k: task[k] for k in ('id', 'topic', 'count', 'status', 'stage', 'message',
                                     'created_at', 'updated_at', 'revision')},
-                selection_count=task.get('selection_count', 5))
+                selection_count=task.get('selection_count', 5), archived=bool(task.get('archived')))
 
 
 class TaskStore:
@@ -103,18 +106,44 @@ class TaskStore:
         with self.connect() as con:
             return [json.loads(row[0]) for row in con.execute('SELECT state FROM tasks ORDER BY created DESC')]
 
-    def summaries(self):
+    def summaries(self, query='', archived=False, limit=50):
         with self.connect() as con:
-            # Number repeated topics across the entire history, before limiting
-            # the sidebar. Reading history never rewrites a running checkpoint.
-            rows = con.execute('''
-                SELECT summary,
-                       ROW_NUMBER() OVER (
-                           PARTITION BY json_extract(summary, '$.topic')
-                           ORDER BY created, id) AS run_number
-                FROM tasks ORDER BY created DESC, id DESC LIMIT 50
-            ''')
+            # Number repeated topics across the entire history, before filtering or
+            # limiting the sidebar. Reading history never rewrites a running checkpoint.
+            clauses, params = ["coalesce(json_extract(summary, '$.archived'), 0) = ?"], [1 if archived else 0]
+            if query:
+                clauses.append("(instr(lower(json_extract(summary, '$.topic')), lower(?)) > 0 OR id LIKE ?)")
+                params += [query, query.lower().removeprefix('rf-') + '%']
+            rows = con.execute(f'''
+                WITH numbered AS (
+                    SELECT summary, created, id,
+                           ROW_NUMBER() OVER (
+                               PARTITION BY json_extract(summary, '$.topic')
+                               ORDER BY created, id) AS run_number
+                    FROM tasks)
+                SELECT summary, run_number FROM numbered WHERE {' AND '.join(clauses)}
+                ORDER BY created DESC, id DESC LIMIT ?
+            ''', params + [limit])
             return [dict(json.loads(row[0]), run_number=row[1]) for row in rows]
+
+    def archived_count(self):
+        with self.connect() as con:
+            return con.execute("SELECT count(*) FROM tasks WHERE coalesce(json_extract(summary, '$.archived'), 0) = 1").fetchone()[0]
+
+    def archive(self, task_id, archived=True):
+        """Hide a finished or paused research from the history; reversible, nothing is deleted."""
+        def change(t):
+            if t['status'] in ACTIVE:
+                raise TaskError('研究还在进行，请先停止再移出历史', 'task_active', 409)
+            t['archived'] = bool(archived)
+        return summary(self.edit(task_id, change))
+
+    def status_counts(self):
+        """Task totals by status across the whole history (the sidebar list stops at 50)."""
+        with self.connect() as con:
+            rows = con.execute("SELECT json_extract(summary, '$.status'), count(*) FROM tasks "
+                               "WHERE coalesce(json_extract(summary, '$.archived'), 0) = 0 GROUP BY 1").fetchall()
+        return {status: count for status, count in rows}
 
     def next_queued(self):
         with self.connect() as con:
@@ -126,7 +155,7 @@ class TaskStore:
             return [row[0] for row in con.execute(
                 "SELECT id FROM tasks WHERE status='queued' ORDER BY created,id")]
 
-    def create(self, task_id, topic, count, models, selection_count=5):
+    def create(self, task_id, topic, count, models, selection_count=5, prompt_snapshot=None):
         try:
             task_id = str(uuid.UUID(task_id))
         except (ValueError, TypeError, AttributeError):
@@ -141,11 +170,11 @@ class TaskStore:
         stamp = time.time()
         task = dict(id=task_id, topic=topic, count=count, selection_count=selection_count,
                     judge_batches=[], created_at=stamp, updated_at=stamp,
-                    revision=1, status='queued', stage=1, stage_models=models,
+                    revision=1, status='queued', stage=1, stage_models=models, prompt_snapshot=prompt_snapshot,
                     ideas=[], top5=[], lit={}, proposals=[], literature_checks={},
                     workflow_version='literature-gate-1', stop_requested=False,
                      inflight=None, inflight_units=[], error=None, events=[], message='')
-        note(task, '研究任务已保存，等待执行')
+        note(task, '已保存，排队等待')
         with self.connect() as con:
             con.execute('BEGIN IMMEDIATE')
             old = con.execute('SELECT state FROM tasks WHERE id=?', (task_id,)).fetchone()
@@ -153,6 +182,9 @@ class TaskStore:
                 old = json.loads(old[0])
                 if (old['topic'], old['count'], old.get('selection_count', 5)) != (topic, count, selection_count):
                     raise TaskError('同一个 request_id 不能用于不同研究任务', 'request_conflict', 409)
+                signature = lambda stages: {k: tuple(v.get(f) for f in ('provider', 'model', 'reasoning_effort')) for k, v in stages.items()}
+                if signature(old.get('stage_models', {})) != signature(models):
+                    raise TaskError('同一个 request_id 不能切换模型或思考强度', 'request_conflict', 409)
                 return old, False
             con.execute('INSERT INTO tasks VALUES(?,?,?,?,?)', (task_id, stamp, task['status'],
                 json.dumps(summary(task), ensure_ascii=False), json.dumps(task, ensure_ascii=False)))
@@ -268,9 +300,9 @@ class ResearchTasks:
             self._thread.join(timeout)
         return not self._thread or not self._thread.is_alive()
 
-    def create(self, task_id, topic, count, selection_count=5):
+    def create(self, task_id, topic, count, selection_count=5, models=None, prompt_snapshot=None):
         self.start()
-        task, created = self.store.create(task_id, topic, count, self.models(), selection_count)
+        task, created = self.store.create(task_id, topic, count, models if models is not None else self.models(), selection_count, prompt_snapshot)
         self._wake.set()
         return task, created
 
@@ -278,11 +310,11 @@ class ResearchTasks:
         def change(t):
             if t['status'] == 'queued':
                 t['status'] = 'stopped'
-                note(t, '任务已停止，已有结果已保存')
+                note(t, '已停止，结果已保存')
             elif t['status'] in ('running', 'stopping'):
                 t['stop_requested'] = True
                 t['status'] = 'stopping'
-                note(t, '已请求停止；不再派发新请求，正在进行的调用结束并保存后停止')
+                note(t, '正在停止：不再发出新请求，等进行中的请求返回并保存')
         task = self.store.edit(task_id, change)
         self._wake.set()
         return task
@@ -291,12 +323,11 @@ class ResearchTasks:
         self.start()
         def change(t):
             if t['status'] == 'stopping':
-                raise TaskError('当前调用尚未结束，请等待任务停止后继续', 'task_stopping', 409)
+                raise TaskError('还在停止中，请稍候再继续', 'task_stopping', 409)
             if t['status'] in ('completed', 'running', 'queued'):
                 return
-            t.update(status='queued', stop_requested=False, error=None, inflight=None, inflight_units=[],
-                     stage_models=self.models())
-            note(t, '已请求继续，将保留全部已完成结果')
+            t.update(status='queued', stop_requested=False, error=None, inflight=None, inflight_units=[])
+            note(t, '继续研究，已完成的部分不会重做')
         task = self.store.edit(task_id, change)
         self._wake.set()
         return task
@@ -351,15 +382,15 @@ class ResearchTasks:
                             t.update(inflight=None, inflight_units=[], stop_requested=False)
                             if requested_stop:
                                 t['status'] = 'stopped'
-                                note(t, '任务已停止，全部已返回结果已保存，可继续')
+                                note(t, '已停止，已返回的结果都已保存，可随时继续')
                             elif run['error']:
                                 t.update(status='failed', error=run['error'])
-                                note(t, '执行暂停：' + run['error']['message'])
+                                note(t, '已暂停：' + run['error']['message'])
                             else:
                                 t['status'] = 'completed'
                                 dropped = sum(c.get('decision') == 'drop' for c in t.get('literature_checks', {}).values())
-                                note(t, f"研究流程已完成：{len(t['proposals'])} 份提案，{dropped} 个方向未进入提案，结果与理由已保存" if selection_target(t) else
-                                     '构想已保存，已跳过筛选与后续步骤' if t['count'] else '空研究任务已保存，未调用模型')
+                                note(t, f"研究完成：{len(t['proposals'])} 份提案" + (f'，{dropped} 个方向未通过文献判断' if dropped else '') if selection_target(t) else
+                                     '构想已生成（本次不做筛选）' if t['count'] else '空研究已保存，未调用模型')
                         self.store.edit(task_id, finish)
                         del owned[task_id]
 
@@ -373,7 +404,7 @@ class ResearchTasks:
                         def begin(t):
                             if t['status'] == 'queued':
                                 t.update(status='running', inflight=None, inflight_units=[])
-                                note(t, '后台开始执行，支持多项研究并行，关闭页面不影响任务')
+                                note(t, '开始执行；可以关闭页面，研究会在后台继续')
                         task = self.store.edit(task_id, begin)
                         if task['status'] == 'running':
                             owned[task_id] = dict(keys=set(), error=None, cancel=threading.Event())
@@ -465,14 +496,14 @@ class ResearchTasks:
         for judge in t['top5']:
             idea = next(x for x in t['ideas'] if x['id'] == judge['id'])
             if str(judge['id']) not in t['lit']:
-                units.append((3, f"检索 Top {judge['rank']} 文献", {'query': f"{idea['title']}. {idea['abstract']}", 'idea_id': idea['id']}))
+                units.append((3, f"检索第 {judge['rank']} 名的文献", {'query': f"{idea['title']}. {idea['abstract']}", 'idea_id': idea['id']}))
         if units:
             return units
         for judge in t['top5']:
             idea = next(x for x in t['ideas'] if x['id'] == judge['id'])
             dropped = t.get('literature_checks', {}).get(str(idea['id']), {}).get('decision') == 'drop'
             if not dropped and not any(p['idea']['id'] == idea['id'] for p in t['proposals']):
-                units.append((4, f"文献判断与优化 Top {judge['rank']}", {'idea': idea, 'judge': judge, 'papers': t['lit'][str(idea['id'])]}))
+                units.append((4, f"判断并完善第 {judge['rank']} 名", {'idea': idea, 'judge': judge, 'papers': t['lit'][str(idea['id'])]}))
         return units
 
     @staticmethod
@@ -488,7 +519,7 @@ class ResearchTasks:
         units = t.get('inflight_units', [])
         t['inflight'] = dict(units[0], parallel_count=len(units)) if units else None
         if len(units) > 1:
-            t['inflight']['label'] = f'并行处理 {len(units)} 项：' + '；'.join(u['label'] for u in units)
+            t['inflight']['label'] = f'同时进行 {len(units)} 项：' + '；'.join(u['label'] for u in units)
 
     @staticmethod
     def finish_inflight(t, unit):
@@ -504,6 +535,8 @@ class ResearchTasks:
         if not allowed():
             raise UnitCancelled()
         token = FIELD_COMPLETION_ALLOWED.set(allowed)
+        model_token = TASK_MODELS.set(self.store.get(task_id).get('stage_models'))
+        prompt_token = TASK_PROMPTS.set(self.store.get(task_id).get('prompt_snapshot'))
         try:
             return self.execute(unit[0], unit[2])
         except Exception:
@@ -513,6 +546,8 @@ class ResearchTasks:
             raise
         finally:
             FIELD_COMPLETION_ALLOWED.reset(token)
+            TASK_MODELS.reset(model_token)
+            TASK_PROMPTS.reset(prompt_token)
 
     @staticmethod
     def save_unit(t, stage, payload, result):
@@ -525,6 +560,13 @@ class ResearchTasks:
             if any(set(batch['idea_ids']) & set(ids) for batch in batches):
                 raise ValueError('评审批次重复，未覆盖已有结果')
             batches.append({'idea_ids': ids, 'top5': result['top5']})
+            if 'academic_taste' in result:
+                taste = result['academic_taste']
+                batches[-1]['academic_taste'] = taste
+                lookup = {str(item['id']): item for item in taste.get('items', [])}
+                for idea in t['ideas']:
+                    if str(idea['id']) in lookup:
+                        idea['academic_taste'] = lookup[str(idea['id'])]
             order = {idea['id']: index for index, idea in enumerate(t['ideas'])}
             batches.sort(key=lambda batch: min(order[i] for i in batch['idea_ids']))
             if {i for batch in batches for i in batch['idea_ids']} == set(order):
@@ -554,12 +596,12 @@ class ResearchTasks:
         if result.get('_format_correction'):
             audit = result['_format_correction']
             t.setdefault('format_corrections', []).append(dict(audit,stage=stage,at=time.time()))
-            note(t, f"S{stage} 已纠正 {audit['edits']} 处 JSON 标点并通过完整校验；原始返回和纠正记录已保存")
+            note(t, f"{STAGE_NAMES[stage]}：自动修正了 {audit['edits']} 处格式问题（原始返回已存档）")
         if result.get('_field_completion'):
             audit = result['_field_completion']
             t.setdefault('field_completions', []).append(dict(audit,stage=stage,at=time.time()))
-            note(t, f"S{stage} 已定向补全 {audit['fields']} 个缺失文本字段（额外调用1次），其余已有内容和评分保持不变")
+            note(t, f"{STAGE_NAMES[stage]}：补全了 {audit['fields']} 个缺失字段（多调用 1 次，其余内容不变）")
         if stage == 4 and result.get('literature_check', {}).get('decision') == 'drop':
-            note(t, f"S4 构想 {payload['idea']['id']} 未进入提案，判断理由已保存")
+            note(t, f"构想 {payload['idea']['id']} 未通过文献判断，理由已保存")
         else:
-            note(t, f'S{stage} 本项结果已保存')
+            note(t, f'{STAGE_NAMES[stage]}结果已保存')
