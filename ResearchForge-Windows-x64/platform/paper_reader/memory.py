@@ -166,6 +166,91 @@ def refresh_taxonomy():
     return count
 
 
+RUNNING=('queued','running','stopping')
+
+
+def remove(job_ids=(),paper_ids=(),dry=False):
+    """Delete readings and/or literature cards with everything that belongs only to them.
+
+    A card loses the given readings; a card left without readings (or named in paper_ids) goes entirely:
+    its versions, identities, links, variable and term records. Original documents no other reading,
+    card or queue item uses are sent to the recycle bin. dry=True only reports what would go."""
+    if __package__:from . import trash
+    else:import trash
+    with storage.DB_LOCK,storage.connect() as db:
+        jobs={j:json.loads(p) for j,p in db.execute('SELECT id,payload FROM jobs')}
+        versions={j:(pid,json.loads(p)) for j,pid,p in db.execute('SELECT job_id,paper_id,payload FROM memory_versions')}
+        cards={pid:json.loads(p) for pid,p in db.execute('SELECT id,payload FROM memory_papers')}
+        drop_cards={p for p in paper_ids if p in cards};drop_jobs={j for j in job_ids if j in jobs or j in versions}
+        drop_jobs|={j for j,(pid,_) in versions.items() if pid in drop_cards}
+        by_card={}
+        for j,(pid,_) in versions.items():by_card.setdefault(pid,set()).add(j)
+        drop_cards|={pid for pid,js in by_card.items() if js<=drop_jobs}
+        if any(jobs.get(j,{}).get('status') in RUNNING for j in drop_jobs):raise ValueError('有精读正在进行，请先停止再删除。')
+        if any(cards[p].get('classification_status')=='processing' for p in drop_cards):raise ValueError('有文献卡片正在自动定位，请稍候再删除。')
+        knowledge=[(rid,json.loads(p)) for rid,p in db.execute('SELECT id,payload FROM reading_knowledge')]
+        gone_knowledge=[rid for rid,e in knowledge if e.get('sources') and set(e['sources'])<=drop_jobs]
+        trimmed=[(rid,e) for rid,e in knowledge if rid not in gone_knowledge and set(e.get('sources',[]))&drop_jobs]
+        queue=[json.loads(p) for (p,) in db.execute('SELECT payload FROM reading_queue')] if db.execute("SELECT 1 FROM sqlite_master WHERE name='reading_queue'").fetchone() else []
+        docs={(jobs.get(j) or versions[j][1]).get('document_id') for j in drop_jobs}
+        kept={x.get('document_id') for j,x in jobs.items() if j not in drop_jobs}|{v.get('document_id') for j,(_,v) in versions.items() if j not in drop_jobs}|{i.get('document_id') for i in queue}
+        docs={d for d in docs if d and d not in kept}
+        plan=dict(cards=[cards[p]['title'] for p in drop_cards],readings=len(drop_jobs),knowledge=len(gone_knowledge),documents=len(docs),
+                  versions_left={cards[p]['title']:len(by_card[p]-drop_jobs) for p in by_card if p not in drop_cards and by_card[p]&drop_jobs})
+        if dry:return plan
+        for rid in gone_knowledge:db.execute('DELETE FROM reading_knowledge WHERE id=?',(rid,))
+        for rid,e in trimmed:
+            e['sources']=[s for s in e['sources'] if s not in drop_jobs]
+            db.execute('UPDATE reading_knowledge SET payload=? WHERE id=?',(json.dumps(e,ensure_ascii=False),rid))
+        has_refined=db.execute("SELECT 1 FROM sqlite_master WHERE name='reading_knowledge_refined'").fetchone()
+        for j in drop_jobs:
+            db.execute('DELETE FROM reading_knowledge_sources WHERE version_id=?',(j,))
+            db.execute('DELETE FROM memory_versions WHERE job_id=?',(j,))
+            db.execute('DELETE FROM jobs WHERE id=?',(j,))
+        for pid in drop_cards:
+            if has_refined:db.execute('DELETE FROM reading_knowledge_refined WHERE paper_id=?',(pid,))
+            db.execute('DELETE FROM memory_edges WHERE source=? OR target=?',(pid,pid))
+            db.execute('DELETE FROM memory_identities WHERE paper_id=?',(pid,))
+            db.execute('DELETE FROM memory_papers WHERE id=?',(pid,))
+        for pid,js in by_card.items():
+            if pid in drop_cards or not js&drop_jobs:continue
+            # The card keeps its other readings and points at the newest one left.
+            left=[versions[j][1] for j in js-drop_jobs]
+            p=cards[pid];p.update(version_count=len(left),latest_job_id=max(left,key=lambda v:v['created'])['id'],updated=time.time())
+            put(db,p)
+        for item in queue:
+            # A queued paper whose reading was deleted can be read again.
+            if item.get('job_id') in drop_jobs or item.get('document_id') in docs:
+                item.update(job_id=None,document_id=None if item.get('document_id') in docs else item.get('document_id'),
+                            status='unread' if item.get('status') in ('read','reading') else item['status'],updated=time.time())
+                db.execute('UPDATE reading_queue SET payload=? WHERE id=?',(json.dumps(item,ensure_ascii=False),item['id']))
+        if db.execute("SELECT 1 FROM sqlite_master WHERE name='research_imports'").fetchone():
+            for d in docs:db.execute('DELETE FROM research_imports WHERE document_id=?',(d,))
+        refresh_local_edges(db)
+    trash.recycle([f for d in docs for f in DOCS.glob(d+'.*')])
+    return plan
+
+
+def delete_project(pid,dry=False):
+    """Delete a project with all its readings, cards and queued papers. The default project can only be emptied."""
+    if __package__:from . import trash
+    else:import trash
+    projects.get(pid)
+    with storage.connect() as db:
+        jobs=[j for j,p in db.execute('SELECT id,payload FROM jobs') if projects.of(json.loads(p))==pid]
+        cards=[c for c,p in db.execute('SELECT id,payload FROM memory_papers') if projects.of(json.loads(p))==pid]
+        queue=[json.loads(p) for (p,) in db.execute('SELECT payload FROM reading_queue')] if db.execute("SELECT 1 FROM sqlite_master WHERE name='reading_queue'").fetchone() else []
+    queue=[i for i in queue if projects.of(i)==pid]
+    plan=remove(jobs,cards,dry=True);plan['queue']=len(queue)
+    if dry:return plan
+    remove(jobs,cards)
+    with storage.DB_LOCK,storage.connect() as db:
+        for item in queue:db.execute('DELETE FROM reading_queue WHERE id=?',(item['id'],))
+        if pid!=projects.DEFAULT:db.execute('DELETE FROM projects WHERE id=?',(pid,))
+    trash.recycle([DATA/'reading_queue_files'/i['stored_name'] for i in queue if i.get('stored_name')])
+    return plan
+
+
 def move_paper(pid,project):
     """Move a card and all of its readings to another project. Links to cards left behind are dropped."""
     with storage.DB_LOCK,storage.connect() as db:

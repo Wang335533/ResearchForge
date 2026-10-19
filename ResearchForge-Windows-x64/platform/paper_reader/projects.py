@@ -4,6 +4,8 @@ Every reading (job), literature card, reading-queue item and, through its card, 
 belongs to exactly one project. Cards are identified within a project, so the same paper read for two
 projects keeps two independent cards, maps and networks. Records written before projects existed belong
 to the default project. A project may carry the research description that new readings compare with.
+Deleting a project removes its readings, cards and queued papers (memory.delete_project); the default
+project can be emptied but not deleted.
 """
 import json
 import time
@@ -121,19 +123,6 @@ def update(pid, data):
     return project
 
 
-def delete(pid):
-    """Only an empty project can be deleted; content must be moved or deleted first."""
-    if pid == DEFAULT:
-        raise ValueError('默认课题不能删除。')
-    with storage.DB_LOCK, storage.connect() as db:
-        get(pid, db)
-        tally = counts(db)
-        if any(v.get(pid) for v in tally.values()) or db.execute(
-                f"SELECT 1 FROM jobs WHERE json_extract(payload,'$.project_id')=?", (pid,)).fetchone():
-            raise ValueError('这个课题里还有精读记录、文献卡片或待读论文；请先移到其他课题，或改为归档。')
-        db.execute('DELETE FROM projects WHERE id=?', (pid,))
-
-
 def install(app):
     initialize()
 
@@ -149,7 +138,4 @@ def install(app):
     def projects_update(pid):
         return jsonify(project=update(pid, request.get_json()))
 
-    @app.delete('/api/projects/<pid>')
-    def projects_delete(pid):
-        delete(pid)
-        return jsonify(ok=True)
+    # Deleting a project (with its content) lives in app.py, next to the literature map it empties.

@@ -1,4 +1,6 @@
 /* Conversation controls: model and reasoning effort chips with a popover menu. */
+/* Reserve the control row before the deferred script creates its buttons. */
+:is(#reader-model-picker, #research-model-picker):not([hidden]) { min-height: 30px; }
 .rf-model-picker { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font: var(--rf-text-sm)/1.2 var(--rf-font); color: var(--rf-text-2); }
 .rf-model-picker[hidden], .rf-model-menu[hidden] { display: none; }
 .rf-model-picker > button {

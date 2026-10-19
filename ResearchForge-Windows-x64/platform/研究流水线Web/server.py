@@ -986,6 +986,12 @@ def resume_task(task_id):
     return jsonify({'task': get_tasks().resume(task_id)}), 202
 
 
+@app.post('/api/tasks/<task_id>/delete')
+def delete_task(task_id):
+    # Only finished or paused research; the history and idea.csv no longer include it.
+    return jsonify({'deleted': get_tasks().store.delete(task_id)})
+
+
 @app.post('/api/tasks/<task_id>/archive')
 def archive_task(task_id):
     d = request.get_json(silent=True)

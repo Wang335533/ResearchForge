@@ -1,12 +1,12 @@
 # ResearchForge · Windows 研究工作台
 
-ResearchForge 把研究构想、论文精读、文献积累和提示词管理放在一个本地工作台中。本次发布同步 2026-10-19 的 Windows 版本，包括完整前端、Python 后端、内置提示词、界面素材与配置模板。
+ResearchForge 把研究构想、论文精读、文献积累和提示词管理放在一个本地工作台中。本次发布同步 2026-10-20 的 Windows 版本，包括完整前端、Python 后端、内置提示词、界面素材与配置模板。
 
 **支持 Windows 10 / 11 x64。当前仅提供 Windows 版本。**
 
 ## 下载与启动
 
-下载 [Windows 完整便携包](https://github.com/Wang335533/ResearchForge/releases/download/v2026.10.19/ResearchForge-Windows-x64.zip)，或到 [Release 页面](https://github.com/Wang335533/ResearchForge/releases/tag/v2026.10.19) 查看发布说明与 SHA256。完整包带有 Python 3.12、应用依赖、Ollama CPU / Vulkan 检索运行时和 Qwen3-Embedding 0.6B，不需要另装 Python、pip 或 Ollama。
+下载 [Windows 完整便携包](https://github.com/Wang335533/ResearchForge/releases/download/v2026.10.20/ResearchForge-Windows-x64.zip)，或到 [Release 页面](https://github.com/Wang335533/ResearchForge/releases/tag/v2026.10.20) 查看发布说明与 SHA256。完整包带有 Python 3.12、应用依赖、Ollama CPU / Vulkan 检索运行时和 Qwen3-Embedding 0.6B，不需要另装 Python、pip 或 Ollama。
 
 GitHub 的 **Code → Download ZIP / Source code** 是源码包，不含体积较大的运行环境和模型；需要解压即用时请下载名为 **ResearchForge-Windows-x64.zip** 的 Release 附件。
 
@@ -45,7 +45,7 @@ pwsh -NoProfile -File .\tools\restart-workbench.ps1
 |组会填报|由用户连接自己的腾讯文档表格，按表头整理精读结果并写入；未配置时不连接任何表格|
 |全文库连接|索引用户自有 PDF / MD / TXT，按 DOI、题名和作者查找、预览并加入精读|
 
-界面包含浅色 / 深色外观、山水插画、宋体子集、命令面板，以及完整 / 简洁 / 关闭三档动效。本版合并跨页过渡、首屏布局和字体缓存优化，移除了按钮点击时的涟漪闪烁。
+界面包含浅色 / 深色外观、山水插画、宋体子集、命令面板，以及完整 / 简洁 / 关闭三档动效。本版修复全屏切换模块时的重影与闪动：模块导航关闭整页快照叠加，变量与术语、文献地图、提示词库及模型选择区保留加载占位；页内文件夹、面板与主题切换保留动效。
 
 ## 模型服务与登录
 

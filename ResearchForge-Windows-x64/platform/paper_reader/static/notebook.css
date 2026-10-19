@@ -42,6 +42,8 @@
 .notebook-missing summary { cursor: pointer; color: var(--rf-warn); }
 .notebook-missing p { margin-top: 6px; }
 .notebook-pages { display: flex; align-items: center; justify-content: center; gap: 14px; margin-top: 22px; color: var(--rf-text-3); font-size: var(--rf-text-sm); }
+/* Keep the loading space after results arrive, so a short list cannot pull the footer upward. */
+#notebook-results { min-height: 40vh; }
 #notebook-results[aria-busy="true"] { opacity: .6; transition: opacity var(--rf-dur-2); }
 .notebook-empty {
   display: grid; justify-items: center; gap: 8px; padding: 56px 24px; border: 1px dashed var(--rf-line-strong); border-radius: var(--rf-r-lg);
@@ -132,6 +134,7 @@
 .knowledge-switches { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin-bottom: 4px; }
 .knowledge-switches .knowledge-kinds { margin-bottom: 0; }
 :is(.knowledge-kinds, .knowledge-langs) b { margin-left: 2px; color: var(--rf-text-4); font-weight: 500; font-variant-numeric: tabular-nums; }
+.knowledge-langs b { display: inline-block; min-width: 4ch; text-align: right; }
 .knowledge-badge.lang-en { background: var(--rf-indigo-soft); color: var(--rf-indigo); }
 .knowledge-badge.lang-zh { background: var(--rf-cinnabar-soft); color: var(--rf-cinnabar); }
 .knowledge-card-head h3:lang(en), #detail-title:lang(en) { font-family: var(--rf-font-serif); letter-spacing: 0; }
@@ -253,8 +256,6 @@
 /* The opening morph: the clicked folder grows into the header; the rest of the page crossfades. */
 ::view-transition-group(rf-folder) { overflow: clip; border-radius: var(--rf-r-lg); animation-duration: 640ms; animation-timing-function: var(--rf-ease-ink); }
 ::view-transition-old(rf-folder), ::view-transition-new(rf-folder) { width: 100%; height: 100%; object-fit: none; object-position: 0 0; animation-duration: 420ms; }
-html:active-view-transition-type(rf-folder)::view-transition-old(rf-sidebar) { display: none; }
-html:active-view-transition-type(rf-folder)::view-transition-new(rf-sidebar) { animation: none; }
 
 @media (max-width: 860px) {
   .folder-grid { grid-template-columns: 1fr; }

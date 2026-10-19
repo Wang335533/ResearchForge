@@ -43,6 +43,7 @@ START-WINDOWS.cmd
 | `paper_reader/report_digest.py` | 从精读报告读出文献卡片（不调用模型）：基本信息与 DOI、保留 Markdown（表格、公式）的各节要点、第2节末尾的“领域定位”、按“作者（年份）《题名》”及 APA 条目识别的引用文献（标注文献对话、理论来源、测量来源、贡献对照等作用） |
 | `paper_reader/projects.py` | 研究课题：最上层的分组。每份精读、文献卡片、待读论文（以及卡片下的变量与术语）属于一个课题；卡片身份按课题区分（`<课题>|doi:…`），同一篇论文在两个课题里是两张独立卡片；关联与引用匹配只在课题内计算。旧数据归入“默认课题”。课题可保存研究说明，新建精读时自动填入“我的研究”。只有空课题可以删除，有内容的可归档 |
 | `paper_reader/jel.py` | 文献地图的领域词表：JEL 一级类目（中文名）。模型、精读报告与人工编辑写的领域名都归一到这张表；每篇论文一个主定位，最多再加一个不同一级类目的跨领域定位 |
+| `paper_reader/trash.py` | 删除时的原文件处理：Windows 用系统 Shell 移入回收站（可还原），其他系统或失败时移到数据目录的 trash 文件夹 |
 | `paper_reader/memory.py` / `memory_jobs.py` | 文献地图：永久卡片、分类、版本、关联。卡片先由报告整理，引用文献与已读卡片按 DOI、题名或唯一的第一作者＋年份匹配，自动生成“引用”和“共同引用”建议连线；后台定位只用一次模型调用，输入为报告要点（约 1.2 万字），只负责与已有分类统一、写简短要点、标签和关联，额度不足或失败时卡片仍可用 |
 | `paper_reader/prompt_library.py` | 个人提示词收藏：集合、版本、回收站、导入与备份 |
 | `paper_reader/research_bridge.py` | 研究构想的参考文献 → 本地全文的匹配与载入精读 |
@@ -84,6 +85,7 @@ START-WINDOWS.cmd
 | `GET/POST /api/tasks` | 列出 / 创建研究任务（`request_id` 幂等）。`?q=` 在服务端按主题或编号前缀搜索全部历史，`?archived=1` 列出已移出的研究；响应带 `archived_count` | 历史 10 s；搜索输入停顿 260 ms 后 |
 | `GET /api/tasks/<id>?after_revision=n` | 任务快照；修订号未变返回 204 | 运行中 1.5 s，空闲 4 s |
 | `POST /api/tasks/<id>/stop` · `/resume` | 停止新请求 / 断点继续 | 用户操作 |
+| `POST /api/tasks/<id>/delete` | 永久删除已结束或暂停的研究（构想、提案、文献判断），并重写 idea.csv；进行中的研究拒绝删除 | 用户操作 |
 | `POST /api/tasks/<id>/archive` `{"archived": bool}` | 移出 / 恢复历史（可撤销，不删除任何结果；进行中的研究返回 409） | 用户操作 |
 | `GET/POST /api/tasks/<id>/report` · `GET …/report/file` | 完整报告导出状态、启动、文件 | 导出中 2 s |
 | `GET/POST /api/prompts` · `/api/admin/*` | 运行提示词读取与保存（需登录） | 对话框 |
@@ -105,6 +107,7 @@ START-WINDOWS.cmd
 | `/api/reading-sync/*` | 组会填报：设置、腾讯文档授权与回调、读取表头、生成预览、上传与核对 |
 | `GET /api/library/status` · `/search` · `/papers/<uid>` · `POST /api/library/import` | 全文库检索、预览、载入。`/search` 参数 `scope=all|title|author|doi`、`local_only`（只看本机有全文）、`source=auto|online|local`；结果带完整书目、`local.status` 与 `match_kind/match_label`；本机检索第一页在没有完全一致的题名时，依次补充主标题一致、文件名一致和相似题名（只扫描题名索引，相似度只作候选）。`uid` 为 `api:<文献编号>`（网站书目，打开时按附件文件名精确定位）或 `file:<哈希>`（本机文件） |
 | `GET /api/memory` · `/api/memory/papers/<id>` · `/api/memory/versions/<job>` 等 | 文献地图读取、编辑、关联、分类、备份恢复 |
+| `GET /api/jobs/<id>/delete-plan` · `DELETE /api/jobs/<id>` · `GET /api/memory/papers/<id>/delete-plan` · `DELETE /api/memory/papers/<id>` · `GET /api/projects/<id>/delete-plan` | 永久删除精读、文献卡片或整个课题（默认课题只能清空）：先返回将删除的内容供确认，再删除记录及只属于它们的变量与术语、关联；没有其他记录使用的原文件移入系统回收站；进行中或正在定位的内容拒绝删除 |
 | `GET/POST /api/projects` · `POST/DELETE /api/projects/<id>` · `POST /api/jobs/<id>/project` · `POST /api/memory/papers/<id>/project` | 研究课题的列表、新建、重命名与说明、归档、删除（仅空课题）；把精读或卡片连同它的全部精读移到另一课题。精读、地图、变量与术语、待读清单、已读目录、学者统计的读取接口都接受 `project=<id>`（空为全部课题） |
 | `GET /api/bridge/references` · `POST /api/bridge/import` | 研究参考文献与本地全文的连接 |
 | `/api/prompt-library/*` | 提示词库集合、版本、导入、备份 |
@@ -126,9 +129,9 @@ platform/shared_ui/            /ui/ —— 所有页面共用
   fonts.css + fonts/           界面宋体子集（思源宋体 SemiBold 的改名子集，OFL），按 unicode-range 分片
   base.css                     重置、排版、滚动条、选区、焦点
   components.css               按钮、输入、卡片、徽标、对话框、提示、菜单、命令面板、骨架、进度
-  shell.css                    侧栏、顶栏、纸面工作区、模块导航、山水题图、跨页过渡
+  shell.css                    侧栏、顶栏、纸面工作区、模块导航、山水题图、页内过渡
   motion.css                   入场、揭示、印章、墨迹等关键帧与减少动态时的降级
-  boot.js                      首帧前应用外观与动效偏好，设置跨页过渡方向
+  boot.js                      首帧前应用外观与动效偏好，标记页面间导航以跳过重复入场
   shell.js                     外观切换、移动端侧栏、页内过渡、Ctrl/⌘+K 命令面板
   motion.js                    动效引擎：分字入场、滚动揭示、数字滚动、磁吸、墨点涟漪、指针光、滑动指示器、动态内容自动增强
   ambient.js                   背景水彩（WebGL，按墙钟时间连续，跨页不跳变；不可用时降级为静态渐变）
@@ -143,7 +146,7 @@ platform/paper_reader/static/   精读、文献地图、提示词库页面与各
 约定：
 
 1. 页面脚本只负责数据与状态，ID 是脚本契约；视觉与动效只通过类名、`data-*` 属性和设计令牌表达。
-2. 页面之间是普通的多页应用，模块切换使用浏览器跨文档视图过渡；侧栏与背景水彩带固定的过渡名，切换时保持不动。
+2. 页面之间是普通的多页应用。模块切换关闭跨文档视图过渡（`navigation: none`），避免不同布局的整屏快照叠加造成重影和闪动。页面间导航仍跳过重复入场；页内过渡需要的名字（`rf-main`、`rf-panel`）只在该过渡进行时才挂上，详见 docs/design-system.md 的动效编排一节。
 3. 轮询会频繁重绘，局部更新先比较签名（`dataset.signature`）；动效引擎只为新插入的节点播放入场，不会在每次轮询时重播。
 4. 系统“减少动态效果”或工作台的“动效：关闭”会停用全部动画与背景渲染；“简洁”保留过渡、关闭持续运动。
 5. 精读模块的 CSP 只允许同源脚本，界面层不能使用内联脚本或外部 CDN；全部资源随包离线提供。

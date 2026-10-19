@@ -38,7 +38,7 @@
 #page-error { margin-bottom: 14px; }
 
 /* ---------------------------------------------------------------- Collection */
-.collection-layout { display: grid; grid-template-columns: minmax(300px, 380px) minmax(0, 1fr); gap: 20px; align-items: start; }
+.collection-layout { display: grid; grid-template-columns: minmax(300px, 380px) minmax(0, 1fr); gap: 20px; align-items: start; min-height: 40vh; }
 .collection-list { display: grid; gap: 10px; }
 #prompt-list { display: grid; gap: 10px; }
 .prompt-card {
@@ -61,7 +61,6 @@
 .prompt-detail {
   position: sticky; top: calc(var(--rf-topbar-h) + 14px); min-height: 420px; max-height: calc(100vh - var(--rf-topbar-h) - 30px); overflow: auto;
   padding: 28px 32px; border: 1px solid var(--rf-line); border-radius: var(--rf-r-xl); background: var(--rf-surface); box-shadow: var(--rf-shadow-sm);
-  view-transition-name: rf-panel;
 }
 .prompt-detail h2 { margin: 6px 0 10px; font: 600 var(--rf-text-2xl)/1.35 var(--rf-font-display); }
 .detail-category { color: var(--rf-ochre); font-size: var(--rf-text-xs); font-weight: 600; letter-spacing: .14em; }

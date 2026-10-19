@@ -138,6 +138,21 @@ class TaskStore:
             t['archived'] = bool(archived)
         return summary(self.edit(task_id, change))
 
+    def delete(self, task_id):
+        """Delete a finished or paused research and its ideas for good; idea.csv is rewritten without them."""
+        with self.connect() as con:
+            con.execute('BEGIN IMMEDIATE')
+            row = con.execute('SELECT state FROM tasks WHERE id=?', (task_id,)).fetchone()
+            if not row:
+                raise TaskError('研究任务不存在', 'task_not_found', 404)
+            task = json.loads(row[0])
+            if task['status'] in ACTIVE:
+                raise TaskError('研究还在进行，请先停止再删除', 'task_active', 409)
+            con.execute('DELETE FROM idea_csv_rows WHERE task_id=?', (task_id,))
+            con.execute('DELETE FROM tasks WHERE id=?', (task_id,))
+            self.idea_csv.write(con)
+        return {'id': task_id, 'topic': task.get('topic', '')}
+
     def status_counts(self):
         """Task totals by status across the whole history (the sidebar list stops at 50)."""
         with self.connect() as con:

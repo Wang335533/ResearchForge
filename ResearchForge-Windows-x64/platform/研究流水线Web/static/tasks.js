@@ -39,6 +39,8 @@ function syncRunButton() {
   $('btn-resume').classList.toggle('hide', !TASK_PAUSED.has(S.task?.status));
   $('btn-archive').classList.toggle('hide', !S.task || S.running || S.recovering);
   $('btn-archive').disabled = S.submitting;
+  $('btn-delete-task').classList.toggle('hide', !S.task || S.running || S.recovering);
+  $('btn-delete-task').disabled = S.submitting;
   $('btn-archive').querySelector('span').textContent = S.task?.archived ? '恢复到历史' : '移出历史';
   $('btn-resume').disabled = S.submitting || S.running || S.recovering;
   $('btn-new').disabled = S.submitting;
@@ -356,6 +358,19 @@ async function archiveTask(archived) {
   } catch (error) { toast(error.message, 'err'); }
 }
 $('btn-archive').onclick = () => archiveTask(!S.task?.archived);
+// Deleting a research is permanent: its ideas, reviews and proposals go, and idea.csv no longer lists them.
+$('btn-delete-task').onclick = async () => {
+  if (!S.taskId || S.running) return;
+  const id = S.taskId, topic = compactTopic(S.task?.topic);
+  const items = [`研究主题「${topic}」的全部结果`, `${(S.ideas || []).length} 个构想、${(S.proposals || []).length} 份提案及文献判断`, 'idea.csv 中对应的行'];
+  if (!await window.RF.confirm({title: `删除「${topic}」？`, message: '删除后无法撤销：', items, note: '只想从历史里隐藏，可以改用“移出历史”。已经载入精读的论文不受影响。'})) return;
+  try {
+    await taskRequest(`/api/tasks/${encodeURIComponent(id)}/delete`, {});
+    newResearch(); await refreshTasks();
+    if (S.showArchived) { await loadArchived(); renderHistory(); }
+    toast(`已删除「${topic}」`);
+  } catch (error) { toast(error.message, 'err'); }
+};
 /* Returning users get their latest research one click away on the home view. */
 function renderRecent() {
   const root = $('recent-list');

@@ -5,7 +5,7 @@ const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const n=x=>Number(x||0).toLocaleString('zh-CN');
 const date=x=>new Date(x*1000).toLocaleString('zh-CN',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
 const byline=p=>(p.authors?.length?p.authors.join(' · '):'作者待核实')+' · '+(p.year||'年份待核实');
-const M={papers:[],edges:[],view:'map',field:'',topic:'',limit:60,detail:null,version:null,tab:'overview',seq:0,zoom:1,taxonomy:[],poll:null};
+const M={papers:[],edges:[],view:(()=>{try{const v=localStorage.getItem('rf-memory-view');return ['map','network','list'].includes(v)?v:'map';}catch{return 'map';}})(),field:'',topic:'',limit:60,detail:null,version:null,tab:'overview',seq:0,zoom:1,taxonomy:[],poll:null};
 const knowledge={abstract:'摘要与内容概述',research_question:'研究问题',contribution:'研究贡献',theory:'理论逻辑',methods:'研究设计与方法',data:'数据与材料',findings:'主要发现',limitations:'局限与边界',open_questions:'尚未解决的问题'};
 // How the report cites a work: which section it appears in says what the relation is.
 const ROLES={dialogue:'文献对话',theory:'理论来源',measure:'测量来源',method:'方法借鉴',evidence:'结果比较',contribution:'贡献对照',mention:'其他提及'};
@@ -84,13 +84,20 @@ document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>$(b.dataset.c
 $('paper-detail').addEventListener('close',()=>{M.seq++;M.detail=null;M.version=null;history.replaceState(null,'',location.pathname+location.search);});
 $('field-tree').onclick=e=>{const b=e.target.closest('[data-field]');if(b){M.field=b.dataset.field;M.topic=b.dataset.topic||'';M.limit=60;tree();render();$('memory-sidebar').classList.remove('open');}};
 $('clear-filter').onclick=()=>{M.field='';M.topic='';M.limit=60;tree();render();};
-document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>{if(M.view===b.dataset.view)return;M.view=b.dataset.view;window.RF?.transition?window.RF.transition(render,'rf-stage'):render();});
+document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>{if(M.view===b.dataset.view)return;M.view=b.dataset.view;try{localStorage.setItem('rf-memory-view',M.view);}catch{}window.RF?.transition?window.RF.transition(render,'rf-stage'):render();});
 document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
 $('tab-overview').addEventListener('click',e=>{const jump=e.target.closest('[data-tab-jump]');if(jump)showTab(jump.dataset.tabJump);});
 for(const id of ['memory-query','memory-year-from','memory-year-to'])$(id).oninput=()=>{M.limit=60;render();};
 document.addEventListener('click',e=>{const b=e.target.closest('[data-paper]');if(b?.dataset.paper)openPaper(b.dataset.paper);if(e.target.closest('#more-papers')){M.limit+=60;render();}});
 $('memory-refresh').onclick=()=>refresh().catch(e=>error(e.message));$('edit-card').onclick=editCard;$('taxonomy-open').onclick=openTaxonomy;$('taxonomy-path').onchange=fillTaxonomy;$('detail-version').onchange=()=>loadVersion($('detail-version').value);
 $('retry-classify').onclick=async()=>{const pid=M.detail.paper.id;$('retry-classify').disabled=true;try{await post('/api/memory/papers/'+pid+'/classify',{});await openPaper(pid,true);toast('已提交重新定位');}catch(e){toast(e.message);$('retry-classify').disabled=false;}};
+// Deleting a card removes it with all its readings, variable/term records and links; originals go to the recycle bin.
+$('delete-card').onclick=async()=>{const p=M.detail?.paper;if(!p)return;
+ try{const {plan}=await api('/api/memory/papers/'+p.id+'/delete-plan');
+  const items=['这张文献卡片与它的 '+plan.readings+' 份精读报告'];if(plan.knowledge)items.push(plan.knowledge+' 条变量与术语记录');if(plan.documents)items.push(plan.documents+' 份原文文件（移入系统回收站）');
+  if(!await window.RF.confirm({title:'删除「'+p.title+'」？',message:'删除后无法撤销：',items,note:'只想换个课题，可以在“编辑文献卡片”里改“所属课题”。'}))return;
+  await api('/api/memory/papers/'+p.id,{method:'DELETE'});$('paper-detail').close();await refresh();toast('已删除「'+p.title+'」');
+ }catch(e){toast(e.message);}};
 $('restore-open').onclick=()=>{$('restore-error').textContent='';dialog('restore-dialog');};$('memory-menu').onclick=()=>$('memory-sidebar').classList.toggle('open');
 $('backup').href=url('/api/memory/backup');$('new-reading').href=url('/#new');if(!base)$('workspace-home').href='/';
 async function init(){try{await refresh();const job=new URLSearchParams(location.search).get('job');if(job){const v=await api('/api/memory/versions/'+encodeURIComponent(job));await openPaper(v.paper_id);}else if(/^[a-f0-9]{32}$/.test(location.hash.slice(1)))await openPaper(location.hash.slice(1));M.poll=setTimeout(poll,4000);}catch(e){error(e.message);M.poll=setTimeout(poll,10000);}}

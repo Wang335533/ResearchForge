@@ -1,6 +1,6 @@
 {
   "edition": "Windows x64",
-  "version": "2026.10.19",
+  "version": "2026.10.20",
   "private_data_included": false,
   "files": [
     {
@@ -10,8 +10,8 @@
     },
     {
       "path": "BUILD_CHECKS.txt",
-      "bytes": 1753,
-      "sha256": "da6dc04e15f8ee156a06e244d929d9f53c009ee9036fce172931670e82c18f63"
+      "bytes": 1263,
+      "sha256": "dbc2447119b7918fc596f9a35c7dd8e8721b0fcbf2c2450273dd0d85a1a87931"
     },
     {
       "path": "chatgpt_config.py",
@@ -40,8 +40,8 @@
     },
     {
       "path": "docs/architecture.md",
-      "bytes": 19171,
-      "sha256": "1244db0e9a09f962fe846be79bbab49c0bdeed17611905aff5d04376e8b759d9"
+      "bytes": 20220,
+      "sha256": "b0377acf88bb9d824aa0bc33fec3e90610419b8ed8bef4eb75222f8be8e0b6d8"
     },
     {
       "path": "docs/ChatGPT套餐接入.md",
@@ -50,8 +50,8 @@
     },
     {
       "path": "docs/design-system.md",
-      "bytes": 12041,
-      "sha256": "91f6cc3700672576613a80a2ecf3bfb5245f6130208d32233bb963b372491706"
+      "bytes": 12761,
+      "sha256": "893a59543b9e3cdd1dfca57581f828c0b16befe0a64e38afa0c482f8829d33aa"
     },
     {
       "path": "docs/setup.html",
@@ -60,8 +60,8 @@
     },
     {
       "path": "docs/开发说明.md",
-      "bytes": 9767,
-      "sha256": "3c3b96da8d8986cf86fa6b9a30a8c2df3883d4b80255fc7633ae99e1a5bf0b01"
+      "bytes": 9817,
+      "sha256": "eca536347d4d642f186a41ba633de28d4ed8b1775e6eba1d741eb311a494fc2f"
     },
     {
       "path": "examples/corpus.template.csv",
@@ -80,8 +80,8 @@
     },
     {
       "path": "platform/paper_reader/app.py",
-      "bytes": 55038,
-      "sha256": "c0fd64b36ba2fb61855bbefd9defb97887cef70ebcb6c2402a771843f70e0325"
+      "bytes": 56212,
+      "sha256": "26fbe986ec086b2c4b00f354052e2927225c7ad848b26aaf63e0c6150dfd66ba"
     },
     {
       "path": "platform/paper_reader/configuration.py",
@@ -115,8 +115,8 @@
     },
     {
       "path": "platform/paper_reader/memory.py",
-      "bytes": 41645,
-      "sha256": "14e9cad844ad0009157def06a1d9cd53e583da0ba64b7e849d6b000ae584fe4e"
+      "bytes": 47946,
+      "sha256": "bebc5d316cedbade8ec6b2cb21ab10153799350e1b64ace5c6bb07cc6e053dc6"
     },
     {
       "path": "platform/paper_reader/memory_jobs.py",
@@ -125,8 +125,8 @@
     },
     {
       "path": "platform/paper_reader/projects.py",
-      "bytes": 6094,
-      "sha256": "8f3684348148a57e7140024b5df572620cd73e207225cadfb9e47f9b8f8ea949"
+      "bytes": 5695,
+      "sha256": "c98b45c04c367823ec3c018d2c0b099a71ac28d1a7b0003d640975413a5aacf8"
     },
     {
       "path": "platform/paper_reader/prompt_library.py",
@@ -185,8 +185,8 @@
     },
     {
       "path": "platform/paper_reader/static/app.js",
-      "bytes": 35910,
-      "sha256": "8f7c5c6c597d18756c6632c82ecc2cf9634cce4139cbe7c638c16a2e979695a6"
+      "bytes": 37061,
+      "sha256": "fcaf50913cdb535ae2e01793cc93a2987e1ee6d481cc6eae44c5be72afa03f6a"
     },
     {
       "path": "platform/paper_reader/static/favicon.svg",
@@ -195,8 +195,8 @@
     },
     {
       "path": "platform/paper_reader/static/index.html",
-      "bytes": 28734,
-      "sha256": "f4ad1090a57916961579ddaa7d2b04726a472618e2a3df39be034e554046f7b9"
+      "bytes": 28966,
+      "sha256": "c8cca4ed751f4c0143960b0a241f0ca6576fce049ddff8ecc420eea83da7e61b"
     },
     {
       "path": "platform/paper_reader/static/library.css",
@@ -215,33 +215,33 @@
     },
     {
       "path": "platform/paper_reader/static/memory.css",
-      "bytes": 33586,
-      "sha256": "98b7ab657e7266f25481f73efdb1c0e0b2700ba13c51ffe9bf3dc3abf8eab43a"
+      "bytes": 33798,
+      "sha256": "bf77f5041ed6ba0a8c3b47413b94ece26a2f193dd5c90a65d39427b74b75b057"
     },
     {
       "path": "platform/paper_reader/static/memory.html",
-      "bytes": 13800,
-      "sha256": "a17e0dfcb3361202624ea2033fe171a791027ded0f1fffe17dcc5ca9032d81f4"
+      "bytes": 14803,
+      "sha256": "c475cff220abd1689bcb8e67c67b79843eadfe48554bc2f03888f1c3f7932d60"
     },
     {
       "path": "platform/paper_reader/static/memory.js",
-      "bytes": 28495,
-      "sha256": "7ff17f23a3f4c1eab8860bbe6f852dde41628c2adc8c1afd7f2e733d0e9988c5"
+      "bytes": 29573,
+      "sha256": "3f9508e6a55669d35ead3a7506ebbf29dc7d9efd06c8d7a9206c5d0df8f1db32"
     },
     {
       "path": "platform/paper_reader/static/notebook.css",
-      "bytes": 22845,
-      "sha256": "d9ce0d255e4630c2d66f9b714e556b025f2b4640a03156555520dc8ba87cb2cb"
+      "bytes": 23144,
+      "sha256": "b9ebffd89922f495b7f14a94f16527e1f1e9fccbc505fbb19d7207570c5b12b9"
     },
     {
       "path": "platform/paper_reader/static/prompt-library.css",
-      "bytes": 11980,
-      "sha256": "5267c8c97509c03ff4f03c7aa9b54092b9b7aa30762b5ea59cc81c7479483015"
+      "bytes": 12091,
+      "sha256": "25fc309c99ee97a920fb875f39383f49527c68d9c4c22d71303f2bcffc9d4f11"
     },
     {
       "path": "platform/paper_reader/static/prompt-library.html",
-      "bytes": 9539,
-      "sha256": "9ffe1b93ecddb399f582d19d936141721e02b9b711cc377c3ad5f8f177e78f3f"
+      "bytes": 9593,
+      "sha256": "7e28e4d3d550e89f6232167af4869453f515b5a848bb68bd06cd30888535ee09"
     },
     {
       "path": "platform/paper_reader/static/prompt-library.js",
@@ -250,8 +250,8 @@
     },
     {
       "path": "platform/paper_reader/static/reading-knowledge.html",
-      "bytes": 8145,
-      "sha256": "dd59c5ff64d937c6030b0884e4b615e1c2367a341f2cbaf616a6b1acf00f228c"
+      "bytes": 8604,
+      "sha256": "7ce2ffa16a633a14845276cc0b820154ed8437ff4b43b289fbdffdd4aca5b055"
     },
     {
       "path": "platform/paper_reader/static/reading-knowledge.js",
@@ -265,8 +265,8 @@
     },
     {
       "path": "platform/paper_reader/static/reading-sync.html",
-      "bytes": 7891,
-      "sha256": "c8ead1d878756301612279f628aaf93b0719bf1abc3c1c6beb264cd5c304c57b"
+      "bytes": 7945,
+      "sha256": "89f150c7b2878806a347d44a47ffe81945edbf90049cd782ca95ac8b8028a1cc"
     },
     {
       "path": "platform/paper_reader/static/reading-sync.js",
@@ -290,8 +290,8 @@
     },
     {
       "path": "platform/paper_reader/static/scholars.html",
-      "bytes": 5805,
-      "sha256": "0d5ecd885eea6c8e0fb933c647a3a368ef7675e7085f2af9e0a8ffee3f27b237"
+      "bytes": 6211,
+      "sha256": "365298ecb1a7b70ff599e223068ac9409e1ca91b32a604b8bef1fec3208d76af"
     },
     {
       "path": "platform/paper_reader/static/vendor/katex/auto-render.min.js",
@@ -624,6 +624,11 @@
       "sha256": "1f1daaaa7d8b01ad0164c3351b6628996a740dd11237df6e333d10a4dcb378d8"
     },
     {
+      "path": "platform/paper_reader/trash.py",
+      "bytes": 1870,
+      "sha256": "b5ea6b7c8fb863aff8fe7fe4e0677b381eee4b64b55cb864c5be714aa9eef64c"
+    },
+    {
       "path": "platform/scripts/export-research.cjs",
       "bytes": 2704,
       "sha256": "3f3d683ca33882c156e728daaae1de811dc7edbeec800c1cc8d29b6a9b7553be"
@@ -765,13 +770,13 @@
     },
     {
       "path": "platform/shared_ui/base.css",
-      "bytes": 4476,
-      "sha256": "1b2df08e581a0d1cbae2345cf48a06bb40ec98e8e5cfac0d55bf93db1719aeb5"
+      "bytes": 4629,
+      "sha256": "421a71727b901551f137788caaf14a75981427859b3d376d45d6d4c5a964a051"
     },
     {
       "path": "platform/shared_ui/boot.js",
-      "bytes": 5866,
-      "sha256": "858d3d5168896d6f26f40770ab23d5dd73d3b825711df84d04a759ac3ef10e10"
+      "bytes": 5458,
+      "sha256": "e703aa650bbcf7f8e9345784375c6c766fc35755fe9021a59105b78605c59b11"
     },
     {
       "path": "platform/shared_ui/components.css",
@@ -810,8 +815,8 @@
     },
     {
       "path": "platform/shared_ui/model-picker.css",
-      "bytes": 3880,
-      "sha256": "ace5f37ee578138164764db4551cde36f4237053a355b68b9778bc0ff9d59dc7"
+      "bytes": 4044,
+      "sha256": "a88a142f1c16c539ce1bda5898b5a2bbe84028943a523388b8f7006cfb585994"
     },
     {
       "path": "platform/shared_ui/model-picker.js",
@@ -820,13 +825,13 @@
     },
     {
       "path": "platform/shared_ui/motion.css",
-      "bytes": 4720,
-      "sha256": "f985913a5a3d5f47509644949ebccebd1937dc112b18718bfc57d869caf6059d"
+      "bytes": 4502,
+      "sha256": "dd19914799d5419d049c217db95205956e1d3d966feb9861e8b4ef2ee8d45557"
     },
     {
       "path": "platform/shared_ui/motion.js",
-      "bytes": 24833,
-      "sha256": "b634798f14a371b3679bad15be3956d8eec7972dc317f7c9ac6af37f48c4317d"
+      "bytes": 26132,
+      "sha256": "5964122285bf724e3fef5454603db3a015995ad62c634f61ee639d8a8114a8b4"
     },
     {
       "path": "platform/shared_ui/setup.css",
@@ -840,13 +845,13 @@
     },
     {
       "path": "platform/shared_ui/shell.css",
-      "bytes": 32191,
-      "sha256": "17e0ffe7fb40347690d482f229a805b04a71d23320791276d0dc3d2796baa0dd"
+      "bytes": 32100,
+      "sha256": "f436d0052293862a8b0f6d1ff2cbd5a99e5c63ca08621a93662cde5a4d7ef2b9"
     },
     {
       "path": "platform/shared_ui/shell.js",
-      "bytes": 35580,
-      "sha256": "0e2416c2a6b373ef033b73d48d8d9dea4bc68a1ad80e137071bc6c3fa9971ad5"
+      "bytes": 39394,
+      "sha256": "b3bda5febe3ad390a6a96659c59546108b9d5474bd9c255f237a931b33f542d3"
     },
     {
       "path": "platform/shared_ui/tokens.css",
@@ -965,13 +970,13 @@
     },
     {
       "path": "platform/研究流水线Web/research_tasks.py",
-      "bytes": 30871,
-      "sha256": "639a6b4906ab21e7d26080f6159794780738944c74fc3931c5756d00366a61d1"
+      "bytes": 32336,
+      "sha256": "6690c4a502c25c305f4f5565269ca1d1158cac7fdbcb8125206036f4b1f4bf66"
     },
     {
       "path": "platform/研究流水线Web/server.py",
-      "bytes": 52984,
-      "sha256": "d8a4ebfa61228be4c90b60209fff43675b10798cf61e5a96fe5bbdbfd7297ca6"
+      "bytes": 53213,
+      "sha256": "244e83ebe32774caf6ac66b757ba95e7210ac78cfb504c27c8afb15761ee7b42"
     },
     {
       "path": "platform/研究流水线Web/static/app.js",
@@ -985,8 +990,8 @@
     },
     {
       "path": "platform/研究流水线Web/static/index.html",
-      "bytes": 23279,
-      "sha256": "cbe14368db542990e8ba2bacb182d27679a7a0234614cf2e421f84f9692eee92"
+      "bytes": 23696,
+      "sha256": "460af17a466678b1b7d5ef78cef7a257129c749688bb814ad25f5bf0dd468523"
     },
     {
       "path": "platform/研究流水线Web/static/overview.js",
@@ -1015,8 +1020,8 @@
     },
     {
       "path": "platform/研究流水线Web/static/tasks.js",
-      "bytes": 26403,
-      "sha256": "b9172874764b67072c8c45aec643cee5d50d03aa2455380afd1af7d824479b57"
+      "bytes": 27932,
+      "sha256": "5416aec90f02df4e0b28431bed6e9345cde1e14266745677c52216ffae40dc99"
     },
     {
       "path": "platform/研究流水线Web/static/views.js",
@@ -1025,8 +1030,8 @@
     },
     {
       "path": "platform/研究流水线Web/static/workspace.css",
-      "bytes": 40568,
-      "sha256": "9870cd72fb0921c0311eedf3185a5593febaa45501b6a661ea058614c9707caf"
+      "bytes": 40940,
+      "sha256": "ba565579463e3fd92c43a908e8de49d24ed3c3828659bd481d66603ffc13ac5c"
     },
     {
       "path": "platform/论文检索/literature_search.py",
@@ -1050,8 +1055,8 @@
     },
     {
       "path": "README.md",
-      "bytes": 9879,
-      "sha256": "52f365f32f273ba8cb8b72fdb083cddf5536d783b03a719fcecdb6314dc37733"
+      "bytes": 10005,
+      "sha256": "792b3184f4dc823689f2a40672f8fc7beb4c1f4647a36eb6b96f4af1e062957a"
     },
     {
       "path": "requirements.lock.txt",
@@ -39221,7 +39226,7 @@
     {
       "path": "使用说明.txt",
       "bytes": 360,
-      "sha256": "1f63dbcdca76251b78486e6d208481a79fdf6c87614a1b03a6ca1df4e7f91b3c"
+      "sha256": "e51174594a541316262ab8f09a99440cf38de44d6a16dc727aa9e97959b6a53f"
     },
     {
       "path": "架构说明.html",

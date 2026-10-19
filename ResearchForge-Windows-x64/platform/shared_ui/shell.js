@@ -198,7 +198,7 @@
   var SOURCES = [
     { key: 'tasks', group: '研究', only: INTEGRATED, url: function () { return '/api/tasks'; },
       map: function (d) { return (d.tasks || []).map(function (t) { return { title: compact(t.topic, 60), sub: (STATUS[t.status] || t.status) + ' · ' + shortDate(t.created_at), icon: 'lightbulb', href: '/?task=' + encodeURIComponent(t.id), keys: t.topic }; }); } },
-    { key: 'jobs', group: '精读记录', url: function () { return READER + '/api/jobs'; },
+    { key: 'jobs', group: '精读记录', url: function () { return READER + '/api/jobs' + (window.RFProject ? window.RFProject.param('?') : ''); },
       map: function (d) { return (d.jobs || []).map(function (j) { return { title: j.title, sub: (STATUS[j.status] || j.status) + ' · ' + shortDate(j.created), icon: 'book-open-text', href: READER + '/#' + j.id }; }); } },
     { key: 'memory', group: '文献地图', url: function () { return READER + '/api/memory'; },
       map: function (d) { return (d.papers || []).map(function (p) { return { title: p.title, sub: [(p.authors || []).slice(0, 2).join(' · '), p.year, (p.locations && p.locations[0] ? p.locations[0].field : '')].filter(Boolean).join(' · '), icon: 'waypoints', href: READER + '/memory#' + p.id, keys: (p.tags || []).join(' ') }; }); } },
@@ -393,6 +393,33 @@
     document.querySelectorAll(MENUS).forEach(function (menu) { menu.open = false; menu.querySelector('summary').focus(); });
   });
 
+  /* ---------- Confirmation for destructive actions ---------- */
+  // RF.confirm({title, message, items, confirm, typed}) → Promise<boolean>. Lists exactly what goes; with
+  // `typed`, the button unlocks only after that name is typed (for deleting a whole project).
+  function confirmAction(options) {
+    var dialog = document.createElement('dialog');
+    dialog.className = 'dialog rf-confirm';
+    dialog.setAttribute('aria-labelledby', 'rf-confirm-title');
+    dialog.innerHTML = '<form method="dialog"><div class="dialog-head"><div><h2 id="rf-confirm-title">' + esc(options.title) + '</h2>' +
+      (options.message ? '<p>' + esc(options.message) + '</p>' : '') + '</div></div><div class="dialog-body">' +
+      (options.items && options.items.length ? '<ul class="rf-confirm-items">' + options.items.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>' : '') +
+      (options.note ? '<p class="rf-confirm-note">' + esc(options.note) + '</p>' : '') +
+      (options.typed ? '<label class="rf-confirm-typed">输入「' + esc(options.typed) + '」以确认<input autocomplete="off" spellcheck="false"></label>' : '') +
+      '</div><div class="dialog-footer"><button class="btn btn-secondary" value="cancel" type="submit">取消</button>' +
+      '<button class="btn btn-danger" value="ok" type="submit"' + (options.typed ? ' disabled' : '') + '>' + esc(options.confirm || '删除') + '</button></div></form>';
+    document.body.appendChild(dialog);
+    var input = dialog.querySelector('.rf-confirm-typed input'), ok = dialog.querySelector('[value="ok"]');
+    if (input) input.addEventListener('input', function () { ok.disabled = input.value.trim() !== options.typed; });
+    return new Promise(function (resolve) {
+      var done = function (ok) { if (done.called) return; done.called = true; resolve(ok); setTimeout(function () { dialog.remove(); }, 300); };
+      // Answer from the button itself; Esc or closing otherwise means no.
+      dialog.querySelector('form').addEventListener('submit', function (event) { done(!!event.submitter && event.submitter.value === 'ok'); });
+      dialog.addEventListener('close', function () { done(dialog.returnValue === 'ok'); });
+      dialog.showModal();
+      (input || dialog.querySelector('[value="cancel"]')).focus();
+    });
+  }
+
   /* ---------- Research projects (课题) ---------- */
   // Reading pages show one project at a time. The switcher sits under the brand; the manager dialog
   // creates, renames, describes, archives and deletes projects. Switching reloads the page.
@@ -444,8 +471,8 @@
       esc(projectCount(p)) + ' · ' + (p.counts.readings || 0) + ' 份精读' + (p.archived ? ' · 已归档' : '') + '</span></div>' +
       '<label>研究说明<textarea name="description" rows="3" maxlength="20000" placeholder="研究问题、数据与初步设计。在这个课题里新建精读时，会自动填入“我的研究”。">' + esc(p.description || '') + '</textarea></label>' +
       '<div class="rf-project-row-actions"><button class="btn btn-secondary btn-sm" type="submit">保存</button>' +
-      (fixed ? '' : '<button class="btn btn-secondary btn-sm" type="button" data-rf-project-archive>' + (p.archived ? '恢复' : '归档') + '</button>' +
-        '<button class="btn btn-secondary btn-sm rf-danger" type="button" data-rf-project-delete' + (empty ? '' : ' disabled title="课题里还有内容：请先把文献移到其他课题，或改为归档"') + '>删除</button>') +
+      (fixed ? '' : '<button class="btn btn-secondary btn-sm" type="button" data-rf-project-archive>' + (p.archived ? '恢复' : '归档') + '</button>') +
+      '<button class="btn btn-secondary btn-sm rf-danger" type="button" data-rf-project-delete' + (fixed && empty ? ' disabled title="默认课题已经是空的"' : '') + '>' + (fixed ? '清空' : '删除') + '</button>' +
       '<span class="rf-project-row-note" role="status"></span></div></form>';
   }
   function openProjectManager(focusNew) {
@@ -469,12 +496,7 @@
             return loadProjects().then(paintManager);
           }).catch(function (e) { note.textContent = e.message; });
         }
-        if (event.target.closest('[data-rf-project-delete]') && confirm('删除这个空课题？')) {
-          projectApi('/api/projects/' + id, { method: 'DELETE' }).then(function () {
-            if (window.RFProject.current() === id) window.RFProject.set('default');
-            return loadProjects().then(paintManager);
-          }).catch(function (e) { note.textContent = e.message; });
-        }
+        if (event.target.closest('[data-rf-project-delete]')) deleteProject(id, note);
       });
       P.dialog.addEventListener('submit', function (event) {
         event.preventDefault();
@@ -497,6 +519,29 @@
     paintManager();
     if (!P.dialog.open) P.dialog.showModal();
     if (focusNew) P.dialog.querySelector('#rf-project-new-name').focus();
+  }
+  // Deleting a project removes its readings, cards and queued papers; a non-empty one needs its name typed.
+  function deleteProject(id, note) {
+    var p = P.list.find(function (x) { return x.id === id; }), fixed = id === 'default';
+    projectApi('/api/projects/' + id + '/delete-plan').then(function (d) {
+      var plan = d.plan, items = [];
+      if (plan.cards.length) items.push(plan.cards.length + ' 张文献卡片（含变量与术语 ' + plan.knowledge + ' 条）');
+      if (plan.readings) items.push(plan.readings + ' 份精读记录');
+      if (plan.queue) items.push(plan.queue + ' 篇待读论文');
+      if (plan.documents) items.push(plan.documents + ' 份原文文件（移入系统回收站）');
+      var empty = !items.length;
+      return confirmAction({ title: fixed ? '清空「' + p.name + '」？' : '删除课题「' + p.name + '」？',
+        message: empty ? '这个课题是空的。' : (fixed ? '默认课题保留，里面的内容全部删除，无法撤销：' : '课题和里面的内容全部删除，无法撤销：'),
+        items: items, note: empty ? '' : '需要保留的文献，可以先在文献卡片里改“所属课题”移走。',
+        typed: empty ? '' : p.name, confirm: fixed ? '清空' : '删除' });
+    }).then(function (ok) {
+      if (!ok) return;
+      return projectApi('/api/projects/' + id, { method: 'DELETE' }).then(function () {
+        if (window.RFProject.current() === id && !fixed) { switchProject('default'); return; }
+        if (window.RFProject.current() === id) { location.reload(); return; }
+        return loadProjects().then(paintManager);
+      });
+    }).catch(function (e) { note.textContent = e.message; });
   }
   function paintManager() {
     if (P.dialog) P.dialog.querySelector('.rf-project-rows').innerHTML = P.list.map(projectRow).join('');
@@ -538,5 +583,5 @@
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', wire); else wire();
 
-  window.RF = { transition: transition, openPalette: openPalette, cycleTheme: cycleTheme, cycleMotion: cycleMotion, icon: icon, readerBase: READER, integrated: INTEGRATED };
+  window.RF = { transition: transition, openPalette: openPalette, cycleTheme: cycleTheme, cycleMotion: cycleMotion, icon: icon, confirm: confirmAction, readerBase: READER, integrated: INTEGRATED };
 })();

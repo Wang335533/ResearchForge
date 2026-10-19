@@ -303,6 +303,17 @@ def memory_overview():
     return jsonify(papers=papers,edges=[e for e in memory.edges() if e['status']!='rejected' and e['source'] in shown and e['target'] in shown],active=active)
 
 
+@app.get('/api/memory/papers/<pid>/delete-plan')
+def memory_delete_plan(pid):
+    return jsonify(plan=memory.remove(paper_ids=[valid_id(pid)], dry=True))
+
+
+@app.delete('/api/memory/papers/<pid>')
+def delete_memory_paper(pid):
+    with RUN_LOCK:
+        return jsonify(deleted=memory.remove(paper_ids=[valid_id(pid)]))
+
+
 @app.post('/api/memory/papers/<pid>/project')
 def move_memory_paper(pid):
     data=request.get_json()
@@ -629,6 +640,31 @@ def list_jobs():
     project = projects.resolve(request.args.get('project'))
     return jsonify(jobs=storage.summaries(archived=archived, project=project), archived_count=storage.archived_count(project),
                    memory_active=classifying)
+
+
+@app.get('/api/jobs/<job_id>/delete-plan')
+def job_delete_plan(job_id):
+    return jsonify(plan=memory.remove([valid_id(job_id)], dry=True))
+
+
+@app.delete('/api/jobs/<job_id>')
+def delete_job(job_id):
+    """Delete a reading for good (its card too if it was the card's only reading); originals go to the recycle bin."""
+    with RUN_LOCK:
+        if valid_id(job_id) in ACTIVE:
+            raise ValueError('这份精读正在进行，请先停止再删除。')
+        return jsonify(deleted=memory.remove([job_id]))
+
+
+@app.get('/api/projects/<pid>/delete-plan')
+def project_delete_plan(pid):
+    return jsonify(plan=memory.delete_project(valid_id(pid), dry=True))
+
+
+@app.delete('/api/projects/<pid>')
+def delete_project(pid):
+    with RUN_LOCK:
+        return jsonify(deleted=memory.delete_project(valid_id(pid)))
 
 
 @app.post('/api/jobs/<job_id>/project')

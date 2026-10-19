@@ -228,8 +228,6 @@
 .step-count:empty { display: none; }
 @property --fill { syntax: "<percentage>"; inherits: false; initial-value: 0%; }
 
-.stage-panel { view-transition-name: none; }
-.stage-panel:not([hidden]) { view-transition-name: rf-panel; }
 .section-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 18px; }
 .section-toolbar h2 { font: 600 var(--rf-text-xl)/1.3 var(--rf-font-serif); }
 .section-toolbar h3 { font-size: var(--rf-text-md); }

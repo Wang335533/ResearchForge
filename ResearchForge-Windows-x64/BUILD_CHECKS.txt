@@ -1,23 +1,16 @@
-ResearchForge Windows x64 — 2026-10-19 publication checks
+ResearchForge Windows x64 — 2026.10.20 publication checks
 
-Validated against the sanitized publication copy, with an empty isolated data directory.
-- Python syntax: 50 application/tool files passed.
-- JavaScript syntax: 26 files passed using node --check.
-- JSON parsing: 14 application/configuration files passed.
-- portable.py --check: bundled Python imports, SQLite FTS5, Ollama and model sizes passed.
-- Actual Windows portable startup and health check passed on a separate loopback port.
-- 24 page/API/resource routes returned HTTP 200 and nonempty responses.
-- Research tasks and reading jobs were empty; configured API keys were empty.
-- OAuth was disconnected and no credentials.dpapi existed in the test data.
-- Browser checked research, reading, map, knowledge, scholars, prompts, group sync and setup.
-- No page exceptions or HTTP >=400 responses during navigation checks.
-- Sidebar navigation preserved entered-page state; no click ripple was present.
-- New screenshots were captured from the empty isolated instance.
-- Publication source and archives scanned for private paths, credential patterns and known local secrets.
-  Reviewed third-party matches are parser markers, public documentation and fake test fixtures.
-- Current application source hashes matched the completed Claude optimization snapshot.
+Validated using the sanitized Windows package and an empty isolated user-data directory.
+- Python / JavaScript / JSON checks: {'python': 51, 'javascript': 26, 'json': 14}.
+- portable.py --check passed using the bundled Python runtime.
+- Actual portable startup and 24 page/API/resource routes passed.
+- Research tasks, readings, API keys and OAuth credentials were absent in the isolated instance.
+- Playwright MCP checked all main modules, real fullscreen navigation, light/dark themes and browser history.
+- Cross-document snapshot transitions stayed disabled; no browser page exceptions or failed static resources.
+- Screenshots were captured from the isolated empty instance.
+- Privacy scans checked selected source, binary resources, archives and known local private values.
+- Full ZIP entries were hashed and compared against SHARE_MANIFEST.json before upload.
 
-No personal corpus, literature connection credentials, research records or login state included.
-No production service was restarted. No paid model request, real OAuth login or Tencent write was tested.
-The application source and embedded prompts are included. Private user_data/config.json are excluded.
-The portable ZIP has a file manifest (SHARE_MANIFEST.json); its own SHA256 is published alongside it.
+No personal literature, indices, research records, OAuth state, keys or private configuration is distributed.
+No paid model calls or real OAuth login were performed. The running personal service was not restarted.
+The source and all built-in prompts are included. Large bundled runtimes/models are in the Release ZIP.

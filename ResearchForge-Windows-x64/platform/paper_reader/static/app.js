@@ -126,7 +126,7 @@ function renderJob(){
   put('report-model',j.snapshot.provider.name+' / '+j.model+(j.snapshot.provider.reasoning_effort?' · '+readerPicker.label(j.snapshot.provider.reasoning_effort):''));
   put('report-basis',j.analysis_basis||'准备读取正文');
   showIf('stop',live(j.status)); $('stop').disabled=j.status==='stopping';
-  showIf('archive-job',!live(j.status)); put($('archive-job').querySelector('span'),j.archived?'恢复到记录':'移出记录');
+  showIf('archive-job',!live(j.status)); put($('archive-job').querySelector('span'),j.archived?'恢复到记录':'移出记录'); showIf('delete-job',!live(j.status));
   showIf('resume',['failed','interrupted','stopped'].includes(j.status));
   showIf('progress-card',j.status!=='completed');setAttr($('progress-card'),'data-status',j.status);
   put('stage',j.stage);if($('progress').value!==j.progress)$('progress').value=j.progress;put('progress-value',j.progress+'%');
@@ -374,6 +374,19 @@ $('archive-job').addEventListener('click',async()=>{
       location.hash='new';await refreshJobs();
       toast('已移出「'+j.title+'」，文献地图中的卡片保留',{label:'撤销',run:async()=>{try{await post('/api/jobs/'+j.id+'/archive',{archived:false});await refreshJobs();location.hash=j.id;}catch(e){toast(e.message);}}});
     }else{await refreshJobs();await selectJob(j.id);toast('已恢复到精读记录');}
+  }catch(e){error(e.message);}
+});
+// Deleting a reading is permanent (its card goes too when it was the card's only reading); originals go to the recycle bin.
+$('delete-job').addEventListener('click',async()=>{
+  const j=state.job;if(!j||live(j.status))return;
+  try{
+    const {plan}=await api('/api/jobs/'+j.id+'/delete-plan');const items=['这份精读报告与它的写作进度'];
+    if(plan.cards.length)items.push('文献卡片「'+plan.cards[0]+'」（这是它唯一的精读）'+(plan.knowledge?'，以及 '+plan.knowledge+' 条变量与术语':''));
+    for(const [title,left] of Object.entries(plan.versions_left||{}))items.push('卡片「'+title+'」保留，还剩 '+left+' 份精读');
+    if(plan.documents)items.push('原文文件（移入系统回收站）');
+    if(!await window.RF.confirm({title:'删除「'+j.title+'」？',message:'删除后无法撤销：',items,note:'只想从列表里隐藏，可以改用“移出记录”。'}))return;
+    await api('/api/jobs/'+j.id,{method:'DELETE'});
+    location.hash='new';await refreshJobs();toast('已删除「'+j.title+'」');
   }catch(e){error(e.message);}
 });
 /* Drop a paper anywhere on the compose view, not only on the small tray. */

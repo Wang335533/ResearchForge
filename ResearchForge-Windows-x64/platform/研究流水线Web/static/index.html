@@ -17,10 +17,10 @@
   <link rel="stylesheet" href="/ui/model-picker.css">
   <link rel="stylesheet" href="/static/workspace.css">
   <link rel="stylesheet" href="/static/reading-bridge.css">
-  <script src="/ui/ambient.js" defer></script>
-  <script src="/ui/motion.js" defer></script>
+  <script src="/ui/ambient.js" defer blocking="render"></script>
+  <script src="/ui/motion.js" defer blocking="render"></script>
   <script src="/ui/model-picker.js" defer></script>
-  <script src="/ui/shell.js" defer></script>
+  <script src="/ui/shell.js" defer blocking="render"></script>
   <script src="/static/app.js" defer></script>
   <script src="/static/views.js" defer></script>
   <script src="/static/exports.js" defer></script>
@@ -121,7 +121,7 @@
       <div id="research-view" class="research-view hide">
         <header class="research-heading">
           <div><div class="eyebrow" id="task-date"></div><h1 id="task-title">正在读取研究…</h1><div class="task-meta"><span id="task-badge" class="status idle">读取中</span><span id="task-summary"></span><span id="task-elapsed" class="task-elapsed" hidden></span></div></div>
-          <div class="research-actions"><button id="btn-archive" class="btn btn-quiet hide" type="button"><svg class="icon" aria-hidden="true"><use href="/ui/icons.svg#i-folder-input"/></svg><span>移出历史</span></button><button id="btn-resume" class="btn btn-primary task-resume hide">继续研究</button><button id="btn-stop" class="btn btn-secondary hide" title="停止当前研究的新请求，已发出的调用返回后保存结果；其他研究继续运行">停止</button></div>
+          <div class="research-actions"><button id="btn-archive" class="btn btn-quiet hide" type="button"><svg class="icon" aria-hidden="true"><use href="/ui/icons.svg#i-folder-input"/></svg><span>移出历史</span></button><button id="btn-delete-task" class="btn btn-quiet rf-danger hide" type="button"><svg class="icon" aria-hidden="true"><use href="/ui/icons.svg#i-trash-2"/></svg><span>删除</span></button><button id="btn-resume" class="btn btn-primary task-resume hide">继续研究</button><button id="btn-stop" class="btn btn-secondary hide" title="停止当前研究的新请求，已发出的调用返回后保存结果；其他研究继续运行">停止</button></div>
         </header>
         <details id="task-topic" class="task-topic hide" data-view-key="research-topic"><summary>研究说明</summary><p id="task-topic-text"></p></details>
         <div id="task-status" class="task-message" role="status"></div>

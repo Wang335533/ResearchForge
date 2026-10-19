@@ -1,4 +1,4 @@
-ResearchForge Windows x64 · 2026-10-19
+ResearchForge Windows x64 · 2026-10-20
 
 完整解压后双击 START-WINDOWS.cmd。关闭启动窗口不会关闭后台工作台。
 初次使用请在共享 API 设置配置自己的服务或独立登录。

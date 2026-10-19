@@ -3,7 +3,7 @@
 /* ---------------------------------------------------------------- Ambient watercolour */
 .rf-ambient {
   position: fixed; inset: 0; z-index: 0; width: 100vw; height: 100vh; pointer-events: none;
-  opacity: var(--rf-wash-strength); view-transition-name: rf-ambient;
+  opacity: var(--rf-wash-strength);
   transition: opacity 1.2s var(--rf-ease-out);
 }
 html:not(.rf-ambient-on) body {
@@ -18,7 +18,6 @@ html:not(.rf-ambient-on) body {
   position: fixed; z-index: 30; inset: 0 auto 0 0; width: var(--rf-sidebar-w);
   display: flex; flex-direction: column; gap: 4px; padding: 18px 14px 14px;
   overflow: hidden auto; overscroll-behavior: contain;
-  view-transition-name: rf-sidebar;
 }
 .brand {
   display: flex; align-items: center; gap: 12px; padding: 4px 8px 16px; color: var(--rf-text); text-decoration: none;
@@ -85,6 +84,15 @@ html:not(.rf-ambient-on) body {
 .rf-project-row-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .rf-project-row-note { color: var(--rf-text-4); font-size: var(--rf-text-xs); }
 .rf-danger:not(:disabled) { color: var(--rf-danger); }
+.rf-danger.btn-quiet:hover:not(:disabled) { background: var(--rf-danger-soft); color: var(--rf-danger); }
+/* Confirmation for deletions (RF.confirm). */
+.rf-confirm { width: min(460px, calc(100vw - 32px)); }
+.rf-confirm .dialog-head p { margin-top: 6px; color: var(--rf-text-3); font-size: var(--rf-text-sm); line-height: 1.7; }
+.rf-confirm-items { display: grid; gap: 6px; margin: 0; padding: 12px 14px 12px 30px; border: 1px solid var(--rf-danger-line); border-radius: var(--rf-r-lg); background: var(--rf-danger-soft); color: var(--rf-text-2); font-size: var(--rf-text-sm); line-height: 1.6; }
+.rf-confirm-items li::marker { color: var(--rf-danger); }
+.rf-confirm-note { margin-top: 10px; color: var(--rf-text-4); font-size: var(--rf-text-xs); line-height: 1.7; }
+.rf-confirm-typed { display: grid; gap: 6px; margin-top: 12px; color: var(--rf-text-3); font-size: var(--rf-text-xs); }
+.rf-confirm .dialog-footer { display: flex; justify-content: flex-end; gap: 8px; }
 
 .workspace-modules { position: relative; display: grid; gap: 2px; margin-bottom: 14px; }
 .workspace-modules a {
@@ -100,7 +108,6 @@ html:not(.rf-ambient-on) body {
 .workspace-modules .nav-pill {
   position: absolute; inset: 0; z-index: -1; border-radius: inherit; background: var(--rf-raised);
   box-shadow: var(--rf-shadow-sm), 0 0 0 1px rgb(120 100 70 / .06);
-  view-transition-name: rf-nav-pill;
 }
 .workspace-modules .nav-pill::after {
   content: ""; position: absolute; left: 0; top: 11px; bottom: 11px; width: 3px; border-radius: 3px; background: var(--rf-accent);
@@ -192,7 +199,6 @@ html:not(.rf-ambient-on) body {
   height: var(--rf-topbar-h); padding: 0 22px 0 26px;
   border-bottom: 1px solid transparent;
   transition: background-color var(--rf-dur-3), border-color var(--rf-dur-3), box-shadow var(--rf-dur-3);
-  view-transition-name: rf-topbar;
 }
 html[data-rf-scrolled] .topbar {
   background: var(--rf-topbar); border-bottom-color: var(--rf-line-soft);
@@ -214,10 +220,14 @@ html[data-rf-scrolled] .topbar {
 .rf-kbar-trigger kbd { height: 22px; border-radius: 999px; padding: 0 8px; border-bottom-width: 1px; }
 
 main { position: relative; }
-:is(#main-content, main#main, main.memory-main, main.prompt-main, main.notebook-main) { view-transition-name: rf-main; }
 
 /* ---------------------------------------------------------------- Hero scene (illustrated header) */
 .rf-hero { position: relative; isolation: isolate; margin-top: calc(-1 * var(--rf-topbar-h)); padding: calc(var(--rf-topbar-h) + 46px) 48px 40px; min-height: 340px; }
+/* On wide screens the heading lines up with the page's centred content column instead of hugging the left edge. */
+.rf-hero { padding-inline: max(48px, calc((100% - var(--rf-page-w, 100%)) / 2)); }
+html[data-rf-module="research"] { --rf-page-w: 900px; }
+html[data-rf-module="reading"] { --rf-page-w: 1080px; }
+html[data-rf-module="memory"] { --rf-page-w: 1160px; }
 .rf-scene { position: absolute; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; contain: paint; }
 .rf-scene::after { content: ""; position: absolute; inset: auto 0 0; height: 46%; background: linear-gradient(transparent, var(--rf-bg)); }
 .rf-scene-sky { position: absolute; inset: 0; background: linear-gradient(var(--rf-art-sky-top), var(--rf-art-sky) 70%, var(--rf-bg)); }
@@ -297,39 +307,23 @@ main { position: relative; }
   #toast, #memory-toast { bottom: 16px; }
 }
 
-/* ---------------------------------------------------------------- Cross-document and in-page transitions */
-.workspace-modules a:nth-of-type(1) > .icon { view-transition-name: rf-nav-i1; }
-.workspace-modules a:nth-of-type(2) > .icon { view-transition-name: rf-nav-i2; }
-.workspace-modules a:nth-of-type(3) > .icon { view-transition-name: rf-nav-i3; }
-.workspace-modules a:nth-of-type(4) > .icon { view-transition-name: rf-nav-i4; }
-::view-transition-group(root) { animation-duration: 260ms; animation-timing-function: var(--rf-ease-out); }
-/* Page switches never pass through a blank frame: old and new overlap. The sidebar and top bar, mostly the
-   same on every page, cross-fade in place (identical parts stay still); the wash simply continues. */
-::view-transition-group(rf-sidebar), ::view-transition-group(rf-topbar) { animation: none; }
-::view-transition-old(rf-sidebar), ::view-transition-new(rf-sidebar),
-::view-transition-old(rf-topbar), ::view-transition-new(rf-topbar) { animation-duration: 180ms; animation-timing-function: var(--rf-ease-out); }
-::view-transition-old(rf-ambient) { display: none; }
-::view-transition-new(rf-ambient) { animation: none; }
-::view-transition-group(rf-nav-pill) { animation-duration: 420ms; animation-timing-function: var(--rf-ease-spring-soft); }
-/* Content: the old page fades while the new one settles in over it, with only a few pixels of travel. */
-::view-transition-group(rf-main) { animation: none; }
-::view-transition-old(rf-main) { animation: rf-fade-out 200ms var(--rf-ease-out) both; }
-::view-transition-new(rf-main) { animation: rf-vt-soft 300ms var(--rf-ease-out) both; }
-html:active-view-transition-type(rf-forward)::view-transition-new(rf-main) { animation-name: rf-vt-soft-forward; }
-html:active-view-transition-type(rf-backward)::view-transition-new(rf-main) { animation-name: rf-vt-soft-backward; }
+/* ---------------------------------------------------------------- In-page transitions */
+/* Cross-document snapshots are disabled in base.css: fading two different page layouts produces ghosted
+   headings/cards and a fullscreen flash. Keep named layers scoped to deliberate in-page interactions. */
+::view-transition-group(root) { animation-duration: 220ms; animation-timing-function: var(--rf-ease-out); }
+html:active-view-transition-type(rf-inpage) :is(#main-content, main#main, main.memory-main, main.prompt-main, main.notebook-main) { view-transition-name: rf-main; }
+html:active-view-transition-type(rf-stage) :is(.stage-panel:not([hidden]), .prompt-detail) { view-transition-name: rf-panel; }
+/* In-page: only the content column (rf-inpage) or one panel (rf-stage) fades; everything else changes at once. */
 html:active-view-transition-type(rf-inpage)::view-transition-group(*) { animation: none; }
 html:active-view-transition-type(rf-inpage)::view-transition-old(*) { display: none; }
 html:active-view-transition-type(rf-inpage)::view-transition-new(*) { animation: none; }
-html:active-view-transition-type(rf-inpage)::view-transition-old(rf-main) { display: block; animation: rf-fade-out 180ms var(--rf-ease-out) both; }
-html:active-view-transition-type(rf-inpage)::view-transition-new(rf-main) { animation: rf-vt-soft 260ms var(--rf-ease-out) both; }
-::view-transition-group(rf-panel) { animation: none; }
-::view-transition-old(rf-panel) { animation: rf-fade-out 160ms var(--rf-ease-out) both; }
-::view-transition-new(rf-panel) { animation: rf-vt-soft 240ms var(--rf-ease-out) both; }
+html:active-view-transition-type(rf-inpage)::view-transition-old(rf-main) { display: block; animation: rf-fade-out 180ms var(--rf-ease-out) both; mix-blend-mode: plus-lighter; }
+html:active-view-transition-type(rf-inpage)::view-transition-new(rf-main) { animation: rf-fade-in 180ms var(--rf-ease-out) both; mix-blend-mode: plus-lighter; }
 html:active-view-transition-type(rf-stage)::view-transition-group(*) { animation: none; }
 html:active-view-transition-type(rf-stage)::view-transition-old(*) { display: none; }
 html:active-view-transition-type(rf-stage)::view-transition-new(*) { animation: none; }
-html:active-view-transition-type(rf-stage)::view-transition-old(rf-panel) { display: block; animation: rf-fade-out 160ms var(--rf-ease-out) both; }
-html:active-view-transition-type(rf-stage)::view-transition-new(rf-panel) { animation: rf-vt-soft 240ms var(--rf-ease-out) both; }
+html:active-view-transition-type(rf-stage)::view-transition-old(rf-panel) { display: block; animation: rf-fade-out 180ms var(--rf-ease-out) both; mix-blend-mode: plus-lighter; }
+html:active-view-transition-type(rf-stage)::view-transition-new(rf-panel) { animation: rf-fade-in 180ms var(--rf-ease-out) both; mix-blend-mode: plus-lighter; }
 /* Arriving from another workspace page (boot.js): the scenery is already there; only the slow ambient
    loops keep moving. A first visit keeps the full entrance. */
 .rf-entered .rf-scene-sun { animation: rf-breathe-glow 9s var(--rf-ease-in-out) infinite; }

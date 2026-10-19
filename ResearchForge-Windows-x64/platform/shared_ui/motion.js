@@ -185,9 +185,10 @@
   function countTo(el, value, options) {
     options = options || {};
     var format = options.format || function (n) { return Math.round(n).toLocaleString('zh-CN'); };
-    var start = Number(el.dataset.rfValue || 0);
+    var first = el.dataset.rfValue === undefined, start = Number(el.dataset.rfValue || 0);
     el.dataset.rfValue = String(value);
-    if (!active() || start === value) { el.textContent = format(value); return; }
+    // After an in-app page switch the figures are simply shown; later changes still tick.
+    if (!active() || start === value || (first && root.classList.contains('rf-entered'))) { el.textContent = format(value); return; }
     var t0 = performance.now(), duration = options.duration || 1100;
     var step = function (now) {
       var t = Math.min(1, (now - t0) / duration), e = 1 - Math.pow(1 - t, 4);
@@ -450,7 +451,25 @@
     scope.querySelectorAll('[data-rf-segmented]').forEach(segmented);
     scope.querySelectorAll('[data-rf-magnetic]').forEach(magnet);
   }
+  // Arriving from another workspace page (boot.js): what the page first shows is already in place, so the
+  // one-off entrances its first render would play (cards unfolding, folders rising, art inking in, a segment
+  // indicator sliding to its tab) are finished before they are painted. Ambient loops, the page cross-fade
+  // and anything that changes after the first moments animate as usual.
+  function settleArrival() {
+    if (!root.classList.contains('rf-entered') || !document.getAnimations) return;
+    var until = performance.now() + 1200;
+    (function settle(now) {
+      document.getAnimations().forEach(function (animation) {
+        var effect = animation.effect;
+        if (!effect || animation.playState === 'finished' || effect.getTiming().iterations === Infinity) return;
+        if ((effect.pseudoElement || '').indexOf('view-transition') >= 0) return;
+        try { animation.finish(); } catch (e) { /* An animation that cannot finish keeps playing. */ }
+      });
+      if (now < until) requestAnimationFrame(settle);
+    })(performance.now());
+  }
   function init() {
+    settleArrival();
     enhance(document);
     onScroll();
     // Re-enhance content inserted later (dialogs filled on open, rendered panels).

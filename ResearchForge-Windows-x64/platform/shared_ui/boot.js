@@ -1,5 +1,5 @@
 /* Runs synchronously in <head>, before first paint: apply the saved appearance and motion
-   preference, and give cross-page transitions a direction that follows the module order. */
+   preference, and note whether this page was reached from another workspace page. */
 (function () {
   var root = document.documentElement;
 
@@ -54,7 +54,6 @@
     };
   })();
 
-  var ORDER = { research: 0, reading: 1, memory: 2, knowledge: 3, prompts: 4, sync: 5 };
   function moduleOf(path) {
     if (/\/memory\/?$/.test(path)) return 'memory';
     if (/\/knowledge\/?$/.test(path)) return 'knowledge';
@@ -86,14 +85,9 @@
   });
   window.addEventListener('pagereveal', function (event) {
     quiet(event.viewTransition);
+    try { sessionStorage.removeItem('rf-from-module'); } catch (e) {}
     if (still() && event.viewTransition) { event.viewTransition.skipTransition(); return; }
-    var from = null;
-    try { from = sessionStorage.getItem('rf-from-module'); sessionStorage.removeItem('rf-from-module'); } catch (e) {}
     // A page reached through a view transition skips its own long entrance choreography.
     if (event.viewTransition) root.classList.add('rf-arrived');
-    if (!event.viewTransition || !from || !event.viewTransition.types) return;
-    var to = moduleOf(location.pathname);
-    if (from === to) return;
-    event.viewTransition.types.add(ORDER[to] > ORDER[from] ? 'rf-forward' : 'rf-backward');
   });
 })();

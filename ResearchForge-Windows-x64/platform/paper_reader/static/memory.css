@@ -55,6 +55,9 @@
 .memory-controls input[type="number"] { width: 92px; min-height: 36px; border-radius: var(--rf-r-full); }
 .memory-viewbar { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 18px; }
 #memory-error { margin-bottom: 16px; }
+/* Until the first records arrive, keep their room so the footnote does not flash high and then drop. */
+/* Preserve the loading space when a short result set arrives. */
+#memory-content { min-height: 40vh; }
 .memory-footnote { margin-top: 26px; color: var(--rf-text-4); font-size: var(--rf-text-xs); text-align: center; }
 .show-more-row { display: flex; justify-content: center; margin-top: 22px; }
 

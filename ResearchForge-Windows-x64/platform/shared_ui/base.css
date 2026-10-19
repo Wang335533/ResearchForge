@@ -1,5 +1,7 @@
 /* Reset, typography and document-level details shared by every workspace page. */
-@view-transition { navigation: auto; }
+/* Module navigation replaces the document without compositing two fullscreen snapshots.
+   In-page transitions still opt in through RF.transition(). */
+@view-transition { navigation: none; }
 
 *, *::before, *::after { box-sizing: border-box; }
 html {

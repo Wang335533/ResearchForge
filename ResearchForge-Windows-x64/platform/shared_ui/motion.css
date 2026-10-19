@@ -17,9 +17,6 @@
 @keyframes rf-vt-in-forward { from { opacity: 0; translate: 36px 0; } }
 @keyframes rf-vt-in-backward { from { opacity: 0; translate: -36px 0; } }
 @keyframes rf-fade-out { to { opacity: 0; } }
-@keyframes rf-vt-soft { from { opacity: 0; translate: 0 8px; } }
-@keyframes rf-vt-soft-forward { from { opacity: 0; translate: 14px 0; } }
-@keyframes rf-vt-soft-backward { from { opacity: 0; translate: -14px 0; } }
 @keyframes rf-fade-in { from { opacity: 0; } }
 @keyframes rf-rise { from { opacity: 0; translate: 0 12px; } }
 @keyframes rf-unfold { from { opacity: 0; translate: 0 18px; scale: .985; } }
